@@ -26,15 +26,20 @@ https://archive.org/advancedsearch.php?q=scanningcenter%3A(chapelhill)+AND+unc_b
 
 =end
 
-
-ifile = CSV.read('search.csv', headers: true) # bnum, id, ark, vol
+# standard fields: bnum, id, ark, vol, publicdate, sponsor, contributor, collection
+# but bnum, id, ark, vol are essential and must be the four first fields
+ifile = CSV.read('search.csv', headers: true) 
+headers = ifile.headers[0].split(",")
 ifile = ifile.sort_by { |r| r[0] }            # sort by bnum
 arks = File.read('nc01.arks.txt').split("\n")
 
 
-$ia_logfile = File.open('ia_log.txt', 'w')
+$ia_logfile = CSV.open('ia_log.csv', 'w')
+$ia_logfile << ['reason', headers].flatten
+
+
 def ia_log(reason, ia_record)
-  $ia_logfile << [reason, ia_record[0..-1]].flatten.join("\t") + "\n"
+  $ia_logfile << [reason, ia_record[0..-1]].flatten
 end
 
 blah = ''
@@ -42,7 +47,7 @@ File.open('hathi_marcxml.xml',"w:UTF-8") do |xml_out|
   xml_out << xml_header
   prev_bnum = nil
   prev_bib = nil
-  ifile.each do |ia_record|
+  ifile[0..10].each do |ia_record|
     puts ia_record
     bnum, ia_id, ark, volume, *misc = ia_record[0..-1]
     bib = prev_bnum == bnum ? prev_bib : SierraBib.new(bnum)

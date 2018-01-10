@@ -48,7 +48,7 @@ is a list of ark ids for all unc-contributed items in HathiTrust as of mid-2017 
 
 Output
 ------
-ia_log.txt -- log of all IA records with their status (one of: 'no sierra record', 'no IA ark_id found', 'record already in HT', 'failed MARC checks', 'wrote xml')
+ia_log.csv -- log of all IA records with their status (one of: 'no sierra record', 'no IA ark_id found', 'record already in HT', 'failed MARC checks', 'wrote xml')
 
 bib_errors.txt -- txt file of bibs with errors
 
