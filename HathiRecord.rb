@@ -170,11 +170,3 @@ class HathiRecord
   end
 
 end
-
-
-=begin
-
-
-
-
-=end

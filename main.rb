@@ -47,7 +47,7 @@ File.open('hathi_marcxml.xml',"w:UTF-8") do |xml_out|
   xml_out << xml_header
   prev_bnum = nil
   prev_bib = nil
-  ifile[0..10].each do |ia_record|
+  ifile.each do |ia_record|
     puts ia_record
     bnum, ia_id, ark, volume, *misc = ia_record[0..-1]
     bib = prev_bnum == bnum ? prev_bib : SierraBib.new(bnum)
