@@ -1,17 +1,22 @@
 require_relative '../HathiRecord'
 
 RSpec.describe HathiRecord do
-  describe 'get_ark' do
-    it 'retrieves ARK identifier from IA based on IA identifier' do
-      expect(HathiRecord.new('b1761015', 'otterbeinhymnalf00chur', 'v.2').get_ark).to(
-        eq('ark:/13960/t05x3dc2n')
-    )
-    end
-  end
+  # I'm not seeing the get_ark method anywhere.
+  # Was this from before when we could get the ark with the IA query?
+  
+  # describe 'get_ark' do
+  #   it 'retrieves ARK identifier from IA based on IA identifier' do
+  #     expect(HathiRecord.new('b1761015', 'otterbeinhymnalf00chur', 'v.2').get_ark).to(
+  #       eq('ark:/13960/t05x3dc2n')
+  #   )
+  #   end
+  # end
 
   describe 'my955' do
-    rec = HathiRecord.new('b1761015', 'otterbeinhymnalf00chur', 'v.2')
-    rec.ark = 'my_ark'
+    irec = IARecord.new('otterbeinhymnalf00chur', 'ark:/13960/t05x3dc2n', 'v.2')
+    irec.ark = 'my_ark'
+    srec = SierraBib.new('b1761015')
+    rec = HathiRecord.new(srec, irec)
     my955 = rec.my955
     it "955 has subfields 'b', 'q', 'v' when volume exists" do
       expect(my955.codes).to eq(['b', 'q', 'v'])
@@ -25,7 +30,11 @@ RSpec.describe HathiRecord do
     it '955 has volume in subfield v if volume' do
       expect(my955.select { |f| f.code == 'v' }[0].value).to eq('v.2')
     end
-    rec_2 = HathiRecord.new('b1761015', 'otterbeinhymnalf00chur', '')
+
+    irec = IARecord.new('otterbeinhymnalf00chur', 'ark:/13960/t05x3dc2n', '')
+    irec.ark = 'my_ark'
+    rec_2 = HathiRecord.new(srec, irec)
+
     my955_2 = rec_2.my955
     it '955 does not have subfield v if !volume' do
       expect(my955_2.codes.include?('v')).to be false
@@ -35,5 +44,7 @@ RSpec.describe HathiRecord do
   #hathimarc
   #oclcnumber
   #my035s
-  #check_marc
+  describe 'check_marc' do
+    
+  end
 end

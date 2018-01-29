@@ -1,5 +1,6 @@
 class IARecord
-  attr_reader :id, :volume, :ark, :misc
+  attr_reader :id, :volume, :misc
+  attr_accessor :ark
 
   def initialize(ia_identifier, ark_id, volume, misc = nil)
     @id = ia_identifier.to_s.strip
