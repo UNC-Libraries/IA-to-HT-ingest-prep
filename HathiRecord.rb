@@ -11,17 +11,6 @@ $c = Connect.new
 class HathiRecord
   attr_reader :oclcnum, :bnum, :warnings, :ia, :hathi_marc, :sierra
 
-  # it's easy enough to manually write the xml, so we do that, rather
-  # than care about REXML
-  @@xml_writer = REXML::Formatters::Pretty.new
-  # setting compact to true destroys consecutive whitespace in data fields
-  #   including fields where it is essential, e.g. 001/008
-  # setting compact to false leaves consecutive whitespace in data fields
-  #   but is also very generous with newlines (in a way that afaik does not
-  #   affect the validity of the xml or the data)
-  @@xml_writer.compact = false  
-  @@xml_writer.width = 100000
-
   def initialize(sierra_bib, ia_record)
     @warnings = []
     @sierra = sierra_bib
@@ -67,15 +56,6 @@ class HathiRecord
     sorter = hmarc.to_hash
     sorter['fields'] = sorter['fields'].sort_by { |x| x.keys }
     @hathi_marc = MARC::Record.new_from_hash(sorter)
-  end
-
-  def write_xml(open_outfile)
-    check_marc
-    return unless @warnings.empty?
-    puts 'writing'
-    xml = @hathi_marc.to_xml.delete_namespace
-    open_outfile.puts @@xml_writer.write(xml.root,"")
-    return true if @warnings.empty?
   end
 
   def manual_write_xml(open_outfile)
