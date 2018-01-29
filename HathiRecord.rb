@@ -67,18 +67,29 @@ class HathiRecord
     xml << "<record>\n"
     xml << "  <leader>#{hathi_marc.leader}</leader>\n"
     marc.each do |f|
-      if f.tag =~ /00[1|3|5|6|7|8]/
-        xml << "  <controlfield tag='#{f.tag}'>#{f.value}</controlfield>\n"
+      if f.tag =~ /00[135678]/
+        data = (f.value =~ /[<>&"']/) ? self.escape_xml_reserved(f.value) : f.value
+        xml << "  <controlfield tag='#{f.tag}'>#{data}</controlfield>\n"
       else
         xml << "  <datafield tag='#{f.tag}' ind1='#{f.indicator1}' ind2='#{f.indicator2}'>\n"
         f.subfields.each do |sf|
-          xml << "    <subfield code='#{sf.code}'>#{sf.value}</subfield>\n"
+          data = (sf.value =~ /[<>&"']/) ? self.escape_xml_reserved(sf.value) : sf.value
+          xml << "    <subfield code='#{sf.code}'>#{data}</subfield>\n"
         end
         xml << "  </datafield>\n"
       end
     end
     xml << "</record>\n"
   end  
+
+  def escape_xml_reserved(data)
+    data.gsub('&', '&amp;').
+         gsub('<', '&lt;').
+         gsub('>', '&gt;').
+         gsub('"', '&quot;').
+         gsub("'", '&apos;')
+  end
+
 
   def warn(message)
     @warnings << message
