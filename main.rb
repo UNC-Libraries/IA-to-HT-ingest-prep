@@ -64,7 +64,7 @@ File.open('hathi_marcxml.xml',"w:UTF-8") do |xml_out|
       ia_log('no IA ark_id found', ia_record)
     elsif arks.include?(hathi.ia.ark)
       ia_log('record already in HT', ia_record)
-    elsif !hathi.write_xml(xml_out)
+    elsif !hathi.manual_write_xml(xml_out)
       ia_log('failed MARC checks', ia_record)
     else
       ia_log('wrote xml', ia_record)

@@ -11,8 +11,15 @@ $c = Connect.new
 class HathiRecord
   attr_reader :oclcnum, :bnum, :warnings, :ia, :hathi_marc, :sierra
 
+  # it's easy enough to manually write the xml, so we do that, rather
+  # than care about REXML
   @@xml_writer = REXML::Formatters::Pretty.new
-  @@xml_writer.compact = true
+  # setting compact to true destroys consecutive whitespace in data fields
+  #   including fields where it is essential, e.g. 001/008
+  # setting compact to false leaves consecutive whitespace in data fields
+  #   but is also very generous with newlines (in a way that afaik does not
+  #   affect the validity of the xml or the data)
+  @@xml_writer.compact = false  
   @@xml_writer.width = 100000
 
   def initialize(sierra_bib, ia_record)
@@ -71,7 +78,28 @@ class HathiRecord
     return true if @warnings.empty?
   end
 
-  
+  def manual_write_xml(open_outfile)
+    check_marc
+    return unless @warnings.empty?
+    xml = open_outfile
+    marc = @hathi_marc.to_a
+    puts 'writing'
+    xml << "<record>\n"
+    xml << "  <leader>#{hathi_marc.leader}</leader>\n"
+    marc.each do |f|
+      if f.tag =~ /00[1|3|5|6|7|8]/
+        xml << "  <controlfield tag='#{f.tag}'>#{f.value}</controlfield>\n"
+      else
+        xml << "  <datafield tag='#{f.tag}' ind1='#{f.indicator1}' ind2='#{f.indicator2}'>\n"
+        f.subfields.each do |sf|
+          xml << "    <subfield code='#{sf.code}'>#{sf.value}</subfield>\n"
+        end
+        xml << "  </datafield>\n"
+      end
+    end
+    xml << "</record>\n"
+  end  
+
   def warn(message)
     @warnings << message
     puts "#{@bnum}a\t#{message}\n"
