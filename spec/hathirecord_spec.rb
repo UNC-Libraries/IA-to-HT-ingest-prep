@@ -1,16 +1,6 @@
 require_relative '../HathiRecord'
 
 RSpec.describe HathiRecord do
-  # I'm not seeing the get_ark method anywhere.
-  # Was this from before when we could get the ark with the IA query?
-  
-  # describe 'get_ark' do
-  #   it 'retrieves ARK identifier from IA based on IA identifier' do
-  #     expect(HathiRecord.new('b1761015', 'otterbeinhymnalf00chur', 'v.2').get_ark).to(
-  #       eq('ark:/13960/t05x3dc2n')
-  #   )
-  #   end
-  # end
 
   describe 'my955' do
     irec = IARecord.new('otterbeinhymnalf00chur', 'ark:/13960/t05x3dc2n', 'v.2')
