@@ -24,13 +24,17 @@ https://archive.org/advancedsearch.php?q=scanningcenter%3A(chapelhill)+AND+unc_b
 
 =end
 
-# standard fields: bnum, id, ark, vol, publicdate, sponsor, contributor, collection
-# but bnum, id, ark, vol are essential and must be the four first fields
-ifile = CSV.read('search.csv', headers: true) 
-headers = ifile.headers[0].split(",")
-ifile = ifile.sort_by { |r| r[0] }            # sort by bnum
+# input = IA search.csv results for prospective HT-ingest
+# essential fields: bnum, id, ark, vol
+# standard addl fields: publicdate, sponsor, contributor, collection
+ifile = IARecord.import_search_csv('search.csv')
+headers = ifile[0].keys
+ifile.sort_by! { |r| r[:unc_bib_record_id] }
+
+# input = arks UNC contributed to HT to date
 arks = File.read('nc01.arks.txt').split("\n")
 
+# input = ia_ids with IA-metadata issues to be excluded from HT-ingest (until fixed)
 problem_ids = CSV.read('problems.csv', headers: true)
 problem_ids = problem_ids.to_a[1..-1].map { |r| r[0] }
 
@@ -43,7 +47,8 @@ $ia_logfile << ['reason', headers].flatten
 
 
 def ia_log(reason, ia_record)
-  $ia_logfile << [reason, ia_record[0..-1]].flatten
+  #$ia_logfile << [reason, ia_record[0..-1]].flatten
+  $ia_logfile << [reason, ia_record.to_a].flatten
 end
 
 blah = ''
@@ -54,14 +59,14 @@ File.open('hathi_marcxml.xml',"w:UTF-8") do |xml_out|
   prev_bib = nil
   ifile.each do |ia_record|
     puts ia_record
-    bnum, ia_id, ark, volume, *misc = ia_record[0..-1]
-    if problem_ids.include?(ia_id)
+    ia = IARecord.new(ia_record)
+    bnum = ia.bib_record_id
+    if problem_ids.include?(ia.id)
       problem_id_exclusion += 1
       ia_log('on problems.csv', ia_record)
       next
     end
     bib = prev_bnum == bnum ? prev_bib : SierraBib.new(bnum)
-    ia = IARecord.new(ia_id, ark, volume, misc)
     hathi = HathiRecord.new(bib, ia)
     blah = hathi
     puts bnum
