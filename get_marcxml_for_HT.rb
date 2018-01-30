@@ -35,8 +35,10 @@ ifile.sort_by! { |r| r[:unc_bib_record_id] }
 arks = File.read('nc01.arks.txt').split("\n")
 
 # input = ia_ids with IA-metadata issues to be excluded from HT-ingest (until fixed)
-problem_ids = CSV.read('problems.csv', headers: true)
-problem_ids = problem_ids.to_a[1..-1].map { |r| r[0] }
+if File.file?('problems.csv')
+  problem_ids = CSV.read('problems.csv', headers: true)
+  problem_ids = problem_ids.to_a[1..-1].map { |r| r[0] }
+end
 
 
 # this logs details of bib/marc errors
@@ -61,10 +63,12 @@ File.open('hathi_marcxml.xml',"w:UTF-8") do |xml_out|
     puts ia_record
     ia = IARecord.new(ia_record)
     bnum = ia.bib_record_id
-    if problem_ids.include?(ia.id)
-      problem_id_exclusion += 1
-      ia_log('on problems.csv', ia_record)
-      next
+    if problem_ids
+      if problem_ids.include?(ia.id)
+        problem_id_exclusion += 1
+        ia_log('on problems.csv', ia_record)
+        next
+      end
     end
     bib = prev_bnum == bnum ? prev_bib : SierraBib.new(bnum)
     hathi = HathiRecord.new(bib, ia)
@@ -91,5 +95,7 @@ $err_log.close
 $ia_logfile.close
 
 errors = File.read('bib_errors.txt').split("\n")
-errors.insert(0, "na\tExcluded #{problem_id_exclusion} ids of the #{problem_ids.length} ids on problems.csv due to...problems. LDSS, if this count is not what you expected, examine.")
+if problem_id_exclusion > 0
+  errors.insert(0, "na\tExcluded #{problem_id_exclusion} ids of the #{problem_ids.length} ids on problems.csv due to...problems. LDSS, if this count is not what you expected, examine.")
+end
 File.write('bib_errors.txt', errors.uniq.join("\n"))
