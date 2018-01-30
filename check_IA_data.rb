@@ -20,7 +20,7 @@ ifile.each do |ia_hash|
 end
 
 ofile = CSV.open('check_IA_data_for_problems.csv', 'w')
-headers = %w(identifier problems bnum ia.volume ia_rec_ct_on_bnum HTstatus ark publicdate sponsor contributor collection)
+headers = %w(identifier problems bnum bib_record_id ia.volume ia_rec_ct_on_bnum HTstatus ark publicdate sponsor contributor collection)
 ofile << headers
 prev_bnum = 'unlikely_initial_string'
 prev_bib = nil
@@ -80,6 +80,7 @@ bnums.entries.each do |temp_bnum, ia_recs|
       ia.id,
       notes.join(';;;'),
       bib.bnum,
+      ia.bib_record_id,
       ia.volume,
       bib.ia.length.to_s,
       htstatus,
