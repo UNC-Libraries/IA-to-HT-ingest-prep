@@ -1,8 +1,6 @@
 
 require 'csv'
 load 'HathiRecord.rb'
-$err_log = File.open('bib_errors.txt', 'w')
-
 
 $c.close if $c
 $c = Connect.new
@@ -33,7 +31,13 @@ headers = ifile.headers[0].split(",")
 ifile = ifile.sort_by { |r| r[0] }            # sort by bnum
 arks = File.read('nc01.arks.txt').split("\n")
 
+problem_ids = CSV.read('problems.csv', headers: true)
+problem_ids = problem_ids.to_a[1..-1].map { |r| r[0] }
 
+
+# this logs details of bib/marc errors
+$err_log = File.open('bib_errors.txt', 'w')
+# this logs general disposition of everything
 $ia_logfile = CSV.open('ia_log.csv', 'w')
 $ia_logfile << ['reason', headers].flatten
 
@@ -43,6 +47,7 @@ def ia_log(reason, ia_record)
 end
 
 blah = ''
+problem_id_exclusion = 0
 File.open('hathi_marcxml.xml',"w:UTF-8") do |xml_out|
   xml_out << xml_header
   prev_bnum = nil
@@ -50,6 +55,11 @@ File.open('hathi_marcxml.xml',"w:UTF-8") do |xml_out|
   ifile.each do |ia_record|
     puts ia_record
     bnum, ia_id, ark, volume, *misc = ia_record[0..-1]
+    if problem_ids.include?(ia_id)
+      problem_id_exclusion += 1
+      ia_log('on problems.csv', ia_record)
+      next
+    end
     bib = prev_bnum == bnum ? prev_bib : SierraBib.new(bnum)
     ia = IARecord.new(ia_id, ark, volume, misc)
     hathi = HathiRecord.new(bib, ia)
@@ -76,4 +86,5 @@ $err_log.close
 $ia_logfile.close
 
 errors = File.read('bib_errors.txt').split("\n")
+errors.insert(0, "na\tExcluded #{problem_id_exclusion} ids of the #{problem_ids.length} ids on problems.csv due to...problems. LDSS, if this count is not what you expected, examine.")
 File.write('bib_errors.txt', errors.uniq.join("\n"))
