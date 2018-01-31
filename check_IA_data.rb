@@ -20,7 +20,7 @@ ifile.each do |ia_hash|
 end
 
 ofile = CSV.open('check_IA_data_for_problems.csv', 'w')
-headers = %w(identifier problems bnum bib_record_id ia.volume ia_rec_ct_on_bnum HTstatus ark publicdate sponsor contributor collection)
+headers = %w(identifier problems bnum bib_record_id ia.volume ia_rec_ct_on_bnum HTstatus notHT_ct_on_bnum ark publicdate sponsor contributor collection)
 ofile << headers
 prev_bnum = 'unlikely_initial_string'
 prev_bib = nil
@@ -38,6 +38,7 @@ bnums.entries.each do |temp_bnum, ia_recs|
   ia_count_by_vol = bib.ia_count_by_vol
   # sort by ia.volume, pad any numbers
   ia_recs.sort_by! { |ia| ia.volume.to_s.gsub(/([0-9]+)/, '\1'.rjust(10, '0')) }
+  not_HT_bib_count = bib.ia.reject { |irec| arks.include?(irec.ark) }.length
   ia_recs.each do |ia|
     puts ia.id
     notes = []
@@ -63,17 +64,17 @@ bnums.entries.each do |temp_bnum, ia_recs|
     end
     #if bib had 1 rec with no vol info and other recs with info
     if ia_count_by_vol.length > 1 and ia_count_by_vol['']
-      notes << 'bib has rec(s) that lack likely-needed vol info'
+      notes << 'bib has rec(s) that lack vol info and others that do not'
     end
     #if bib is serial and ia has no vol info
     # bib.record_id check skips this for deleted bibs
     if bib.record_id && bib.serial? && ia.volume.empty?
-      notes << 'bib is a serial and lacks vol info'
+      notes << 'this ia.vol empty but bib is a serial'
       #warn true
     end
     #if ia has other rec in ia with same vol info
     if !ia.volume.empty? && ia_count_by_vol[ia.volume] > 1
-      notes << 'other ia_rec on bib has same vol info'
+      notes << 'this ia.vol equals other ia.vol on same bib, dupe?'
     end
     htstatus = arks.include?(ia.ark) ? 'ark_in_HT' : 'ark_not_in_HT'
     ofile << [
@@ -84,6 +85,7 @@ bnums.entries.each do |temp_bnum, ia_recs|
       ia.volume,
       bib.ia.length.to_s,
       htstatus,
+      not_HT_bib_count.to_s,
       ia.ark,
       ia.hsh[:publicdate].to_s,
       ia.hsh[:sponsor].to_s,

@@ -1,3 +1,5 @@
+require 'csv'
+
 class IARecord
   attr_reader :id, :volume, :ark, :misc, :bnum, :inum, :hsh
   attr_accessor :warnings
@@ -33,6 +35,11 @@ class IARecord
     ifile = CSV.read(csv_path, headers: true)
     headers = ifile.headers[0].split(",").map { |x| x.to_sym }
     ifile = ifile.to_a[1..-1].map { |row| headers.zip(row).to_h }
+    # IA sometimes returns truncated csv's, the last record of which is:
+    failstring = 'Search engine returned invalid information or was unresponsive'
+    if ifile[-1].values.include?(failstring)
+      raise 'The search.csv file is truncated. Re-download it.'
+    end
     return ifile
   end
 
@@ -51,7 +58,7 @@ class IARecord
     # 1867/68
     # 1867-68
     return false if @volume.empty?
-    return false if @volume =~ /^\(?[[:alpha:]]|#/
+    return false if @volume =~ /^\(?[[:alpha:]]/
     return false if @volume =~ /^\(?[0-9]{4}([^0-9].*)?$/
     return false if @volume =~ /^\(?[0-9]+(st|nd|rd|th|d|er|re|e|eme|de)/
     true
