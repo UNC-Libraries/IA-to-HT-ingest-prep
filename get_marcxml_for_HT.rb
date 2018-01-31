@@ -29,7 +29,7 @@ https://archive.org/advancedsearch.php?q=scanningcenter%3A(chapelhill)+AND+unc_b
 # standard addl fields: publicdate, sponsor, contributor, collection
 ifile = IARecord.import_search_csv('search.csv')
 headers = ifile[0].keys
-ifile.sort_by! { |r| r[:unc_bib_record_id] }
+#ifile.sort_by! { |r| r[:unc_bib_record_id] }
 
 # input = arks UNC contributed to HT to date
 arks = File.read('nc01.arks.txt').split("\n")
@@ -62,6 +62,7 @@ File.open('hathi_marcxml.xml',"w:UTF-8") do |xml_out|
   ifile.each do |ia_record|
     puts ia_record
     ia = IARecord.new(ia_record)
+    p ia
     bnum = ia.bib_record_id
     if problem_ids
       if problem_ids.include?(ia.id)

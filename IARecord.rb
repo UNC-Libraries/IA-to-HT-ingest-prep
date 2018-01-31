@@ -1,12 +1,28 @@
 class IARecord
-  attr_reader :id, :volume, :ark, :misc, :bib_record_id, :hsh
+  attr_reader :id, :volume, :ark, :misc, :bnum, :inum, :hsh
+  attr_accessor :warnings
 
+  # ia = IARecord.new({:identifier => 'otterbeinhymnalf00chur',
+  #                    :'identifier-ark' => 'ark:/13960/t05x3dc2n',
+  #                    :volume =>'v.2'})
   def initialize(data_hash)
+    @warnings = []
     @hsh = data_hash
-    @id = @hsh[:identifier].to_s.strip
+    hid = @hsh[:identifier].to_s.strip
+    puts "HID: #{hid}"
+    if hid
+      if hid == ''
+        @warnings << 'No IA id'
+        @id = nil
+      else
+        @id = hid
+      end
+    else
+      @warnings << 'No IA id'
+    end
     @volume = @hsh[:volume].to_s.strip
     @ark = @hsh[:"identifier-ark"].to_s.strip
-    @bib_record_id = @hsh[:unc_bib_record_id].to_s.strip
+    @bnum = @hsh[:unc_bib_record_id].to_s.strip
   end
 
   # Reads IA csv exported from advanced search into hash with symbol headers.

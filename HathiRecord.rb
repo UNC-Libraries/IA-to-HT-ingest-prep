@@ -15,7 +15,7 @@ class HathiRecord
     @warnings = []
     @sierra = sierra_bib
     @bnum = @sierra.bnum
-    unless @sierra.record_id
+    if @sierra.warnings.include?('No record was found in Sierra for this bnum')
       self.warn('No record was found in Sierra for this bnum')
       return
     end
@@ -94,7 +94,7 @@ class HathiRecord
   def warn(message)
     @warnings << message
     puts "#{@bnum}a\t#{message}\n"
-    $err_log << "#{@bnum}\t#{message}\n"
+#    $err_log << "#{@bnum}\t#{message}\n"
   end
 
   def check_marc
