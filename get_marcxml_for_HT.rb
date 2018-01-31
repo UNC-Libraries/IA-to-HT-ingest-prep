@@ -35,6 +35,7 @@ ifile.sort_by! { |r| r[:unc_bib_record_id] }
 arks = File.read('nc01.arks.txt').split("\n")
 
 # input = ia_ids with IA-metadata issues to be excluded from HT-ingest (until fixed)
+problem_ids = []
 if File.file?('problems.csv')
   problem_ids = CSV.read('problems.csv', headers: true)
   problem_ids = problem_ids.to_a[1..-1].map { |r| r[0] }
@@ -95,7 +96,5 @@ $err_log.close
 $ia_logfile.close
 
 errors = File.read('bib_errors.txt').split("\n")
-if problem_id_exclusion > 0
-  errors.insert(0, "na\tExcluded #{problem_id_exclusion} ids of the #{problem_ids.length} ids on problems.csv due to...problems. LDSS, if this count is not what you expected, examine.")
-end
+errors.insert(0, "na\tExcluded #{problem_id_exclusion} ids of the #{problem_ids.length} ids on problems.csv due to...problems. LDSS, if this count is not what you expected, examine.")
 File.write('bib_errors.txt', errors.uniq.join("\n"))
