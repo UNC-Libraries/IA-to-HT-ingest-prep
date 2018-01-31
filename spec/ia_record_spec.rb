@@ -31,17 +31,33 @@ RSpec.describe IARecord do
       expect(irec2.warnings).to include('No IA id')
     end
 
-    ihash3 = {:unc_bib_record_id=>"b2095036", :identifier=>"", :"identifier-ark"=>"ark:/13960/t9962ss6m", :volume=>"v. 550, no. 2", :publicdate=>"2015-02-02T18:38:50Z", :sponsor=>"University of North Carolina at Chapel Hill", :contributor=>"University Library, University of North Carolina at Chapel Hill", :collection=>"spandr,unclibraries,americana"}
+    ihash3 = {:unc_bib_record_id=>"b2095036", :identifier=>"elclavoardiendod550valc", :"identifier-ark"=>"", :volume=>"v. 550, no. 2", :publicdate=>"2015-02-02T18:38:50Z", :sponsor=>"University of North Carolina at Chapel Hill", :contributor=>"University Library, University of North Carolina at Chapel Hill", :collection=>"spandr,unclibraries,americana"}
     irec3 = IARecord.new(ihash3)
-    it 'sets id to nil when lacking' do
-      expect(irec3.id).to eq(nil)
+    it 'sets ark to nil when lacking' do
+      expect(irec3.ark).to eq(nil)
     end
-    it 'sets warning re missing id' do
-      expect(irec3.warnings).to include('No IA id')
+    it 'sets warning re missing ark' do
+      expect(irec3.warnings).to include('No IA ark')
     end    
+
+    ihash4 = {:unc_bib_record_id=>"", :identifier=>"elclavoardiendod550valc", :"identifier-ark"=>"ark:/13960/t9962ss6m", :volume=>"v. 550, no. 2", :publicdate=>"2015-02-02T18:38:50Z", :sponsor=>"University of North Carolina at Chapel Hill", :contributor=>"University Library, University of North Carolina at Chapel Hill", :collection=>"spandr,unclibraries,americana"}
+    irec4 = IARecord.new(ihash4)
+    it 'sets bnum to nil when lacking' do
+      expect(irec4.bnum).to eq(nil)
+    end
+    it 'sets warning re missing bnum' do
+      expect(irec4.warnings).to include('No bnum in IA')
+    end        
+
+    ihash5 = {:unc_bib_record_id=>"b2095036", :identifier=>"elclavoardiendod550valc", :"identifier-ark"=>"ark:/13960/t9962ss6m", :volume=>"", :publicdate=>"2015-02-02T18:38:50Z", :sponsor=>"University of North Carolina at Chapel Hill", :contributor=>"University Library, University of North Carolina at Chapel Hill", :collection=>"spandr,unclibraries,americana"}
+    irec5 = IARecord.new(ihash5)
+    it 'sets volume to nil when lacking' do
+      expect(irec5.volume).to eq(nil)
+    end
+
   end
 
   describe 'lacks_caption' do
-  end
+end
 
 end

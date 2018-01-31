@@ -11,7 +11,6 @@ class IARecord
     @warnings = []
     @hsh = data_hash
     hid = @hsh[:identifier].to_s.strip
-    puts "HID: #{hid}"
     if hid
       if hid == ''
         @warnings << 'No IA id'
@@ -20,11 +19,46 @@ class IARecord
         @id = hid
       end
     else
+      @id = nil
       @warnings << 'No IA id'
     end
-    @volume = @hsh[:volume].to_s.strip
-    @ark = @hsh[:"identifier-ark"].to_s.strip
-    @bnum = @hsh[:unc_bib_record_id].to_s.strip
+
+    hark = @hsh[:'identifier-ark'].to_s.strip
+    if hark
+      if hark == ''
+        @warnings << 'No IA ark'
+        @ark = nil
+      else
+        @ark = hark
+      end
+    else
+      @ark = nil
+      @warnings << 'No IA ark'
+    end
+
+    hbnum = @hsh[:unc_bib_record_id].to_s.strip
+    if hbnum
+      if hbnum == ''
+        @warnings << 'No bnum in IA'
+        @bnum = nil
+      else
+        @bnum = hbnum
+      end
+    else
+      @bnum = nil
+      @warnings << 'No bnum in IA'
+    end
+
+    hvol = @hsh[:volume].to_s.strip
+    if hvol
+      if hvol == ''
+        @volume = nil
+      else
+        @volume = hvol
+      end
+    else
+      @volume = nil
+    end
   end
 
   # Reads IA csv exported from advanced search into hash with symbol headers.
