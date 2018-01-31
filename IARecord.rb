@@ -77,7 +77,7 @@ class IARecord
     return ifile
   end
 
-  def lacks_caption
+  def lacks_caption?
     # don't rely on 0 false positives; add further rules below as needed
     #
     # return true when volume numeration is present and lacks a beginning
@@ -91,10 +91,11 @@ class IARecord
     # 1867/1868
     # 1867/68
     # 1867-68
-    return false if @volume.empty?
+    return false if @volume == nil
     return false if @volume =~ /^\(?[[:alpha:]]/
     return false if @volume =~ /^\(?[0-9]{4}([^0-9].*)?$/
     return false if @volume =~ /^\(?[0-9]+(st|nd|rd|th|d|er|re|e|eme|de)/
+    return false if @volume =~ /^#/    
     true
   end
 

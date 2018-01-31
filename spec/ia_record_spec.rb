@@ -54,10 +54,60 @@ RSpec.describe IARecord do
     it 'sets volume to nil when lacking' do
       expect(irec5.volume).to eq(nil)
     end
-
   end
 
+  describe 'import_search_csv' do
+    #todo
+  end
+  
   describe 'lacks_caption' do
-end
+    it 'returns true when volume = 2' do 
+      irec = IARecord.new({:unc_bib_record_id=>"b2095036",
+                           :identifier=>"elclavoardiendod550valc",
+                           :"identifier-ark"=>"ark:/13960/t9962ss6m",
+                           :volume=>"2"})
+      expect(irec.lacks_caption?).to eq(true)
+    end
+
+    it 'returns false when volume is blank' do 
+      irec = IARecord.new({:unc_bib_record_id=>"b2095036",
+                           :identifier=>"elclavoardiendod550valc",
+                           :"identifier-ark"=>"ark:/13960/t9962ss6m",
+                           :volume=>""})
+      expect(irec.lacks_caption?).to eq(false)
+    end
+
+    it 'returns false when volume is bd. 18' do 
+      irec = IARecord.new({:unc_bib_record_id=>"b2095036",
+                           :identifier=>"elclavoardiendod550valc",
+                           :"identifier-ark"=>"ark:/13960/t9962ss6m",
+                           :volume=>"bd. 18"})
+      expect(irec.lacks_caption?).to eq(false)
+    end
+
+    it 'returns false when volume is date' do 
+      irec = IARecord.new({:unc_bib_record_id=>"b2095036",
+                           :identifier=>"elclavoardiendod550valc",
+                           :"identifier-ark"=>"ark:/13960/t9962ss6m",
+                           :volume=>"1867"})
+      expect(irec.lacks_caption?).to eq(false)
+    end
+
+    it 'returns false when volume is ordinal' do 
+      irec = IARecord.new({:unc_bib_record_id=>"b2095036",
+                           :identifier=>"elclavoardiendod550valc",
+                           :"identifier-ark"=>"ark:/13960/t9962ss6m",
+                           :volume=>"1st foo"})
+      expect(irec.lacks_caption?).to eq(false)
+    end
+
+    it 'returns false when volume begins with octothorp' do 
+      irec = IARecord.new({:unc_bib_record_id=>"b2095036",
+                           :identifier=>"elclavoardiendod550valc",
+                           :"identifier-ark"=>"ark:/13960/t9962ss6m",
+                           :volume=>"#3"})
+      expect(irec.lacks_caption?).to eq(false)
+    end
+  end
 
 end

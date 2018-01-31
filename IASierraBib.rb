@@ -129,7 +129,7 @@ class SierraBib
 
   def ia__recs_lacking_caption
     return nil if !@ia
-    return @ia.select { |ia| ia.lacks_caption }
+    return @ia.select { |ia| ia.lacks_caption? }
   end
 
   def ia_count_by_vol

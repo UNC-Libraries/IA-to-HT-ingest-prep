@@ -47,12 +47,12 @@ bnums.entries.each do |temp_bnum, ia_recs|
     else
       notes << 'bib deleted' 
     end
-    unless bib.ia.select { |ia| ia.lacks_caption }.empty?
+    unless bib.ia.select { |ia| ia.lacks_caption? }.empty?
       # if bib has any ia with vol info that lacks caption
       # may as well warn about any on bib, such that with "v.2" and "2"
       # we'll reject both and process as dupes, rather than permit the "v.2"
       # and later find the "2" is a dupe
-      if ia.lacks_caption
+      if ia.lacks_caption?
         notes << 'this ia_rec lacks a caption'
       else
         notes << 'other ia_rec on bib lacks a caption'
