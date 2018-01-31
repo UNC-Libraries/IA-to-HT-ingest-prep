@@ -3,8 +3,7 @@ require_relative '../HathiRecord'
 RSpec.describe HathiRecord do
 
   describe 'my955' do
-    irec = IARecord.new('otterbeinhymnalf00chur', 'ark:/13960/t05x3dc2n', 'v.2')
-    irec.ark = 'my_ark'
+    irec = IARecord.new(identifier: 'otterbeinhymnalf00chur', "identifier-ark": 'ark:/13960/t05x3dc2n', volume: 'v.2')
     srec = SierraBib.new('b1761015')
     rec = HathiRecord.new(srec, irec)
     my955 = rec.my955
@@ -12,7 +11,7 @@ RSpec.describe HathiRecord do
       expect(my955.codes).to eq(['b', 'q', 'v'])
     end
     it '955 has ark in subfield b' do
-      expect(my955.select { |f| f.code == 'b' }[0].value).to eq('my_ark')
+      expect(my955.select { |f| f.code == 'b' }[0].value).to eq('ark:/13960/t05x3dc2n')
     end
     it '955 has ia_id in subfield q' do
       expect(my955.select { |f| f.code == 'q' }[0].value).to eq('otterbeinhymnalf00chur')
@@ -21,8 +20,7 @@ RSpec.describe HathiRecord do
       expect(my955.select { |f| f.code == 'v' }[0].value).to eq('v.2')
     end
 
-    irec = IARecord.new('otterbeinhymnalf00chur', 'ark:/13960/t05x3dc2n', '')
-    irec.ark = 'my_ark'
+    irec = IARecord.new(identifier: 'otterbeinhymnalf00chur', "identifier-ark": 'ark:/13960/t05x3dc2n', volume: '')
     rec_2 = HathiRecord.new(srec, irec)
 
     my955_2 = rec_2.my955
