@@ -108,6 +108,22 @@ RSpec.describe IARecord do
                            :volume=>"#3"})
       expect(irec.lacks_caption?).to eq(false)
     end
+
+    it 'returns true when volume begins with octothorp if octothorp disallowed' do 
+      irec = IARecord.new({:unc_bib_record_id=>"b2095036",
+                           :identifier=>"elclavoardiendod550valc",
+                           :"identifier-ark"=>"ark:/13960/t9962ss6m",
+                           :volume=>"#3"})
+      expect(irec.lacks_caption?(octothorp_allowed: false)).to eq(true)
+    end
+
+    it 'returns false when an open parenthesis precedes caption' do 
+      irec = IARecord.new({:unc_bib_record_id=>"b2095036",
+                           :identifier=>"elclavoardiendod550valc",
+                           :"identifier-ark"=>"ark:/13960/t9962ss6m",
+                           :volume=>"(v.3"})
+      expect(irec.lacks_caption?).to eq(false)
+    end
   end
 
 end

@@ -77,11 +77,12 @@ class IARecord
     return ifile
   end
 
-  def lacks_caption?
+  def lacks_caption?(octothorp_allowed: true)
     # don't rely on 0 false positives; add further rules below as needed
     #
     # return true when volume numeration is present and lacks a beginning
-    # caption. Years and ordinal numbers are permitted.
+    # caption. Years and ordinal numbers are permitted. A leading open
+    # parenthesis is ignored.
     #   each returns false: ['', 'v.3', '1999', '1st thing', '#3']
     #   returns true: '2'
     # permitted date forms:
@@ -92,10 +93,11 @@ class IARecord
     # 1867/68
     # 1867-68
     return false if @volume == nil
-    return false if @volume =~ /^\(?[[:alpha:]]/
-    return false if @volume =~ /^\(?[0-9]{4}([^0-9].*)?$/
-    return false if @volume =~ /^\(?[0-9]+(st|nd|rd|th|d|er|re|e|eme|de)/
-    return false if @volume =~ /^#/    
+    volume = @volume[0] == '(' ? @volume[1..-1] : @volume
+    return false if volume =~ /^[[:alpha:]]/
+    return false if volume =~ /^[0-9]{4}([^0-9].*)?$/
+    return false if volume =~ /^[0-9]+(st|nd|rd|th|d|er|re|e|eme|de)/
+    return false if volume =~ /^#/ if octothorp_allowed
     true
   end
 

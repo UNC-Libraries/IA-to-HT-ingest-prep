@@ -1,6 +1,3 @@
-
-require 'rexml/document'
-require 'rexml/formatters/pretty'
 require_relative './IARecord'
 require_relative '../sierra_postgres_utilities/SierraBib'
 
@@ -15,13 +12,17 @@ class HathiRecord
     @warnings = []
     @sierra = sierra_bib
     @bnum = @sierra.bnum
-    if @sierra.warnings.include?('No record was found in Sierra for this bnum')
+    if @sierra.warnings.include?('No record was found in Sierra for this bnum') ||
+       @sierra.warnings.include?('Cannot retrieve Sierra bib. Bnum must start with b')
       self.warn('No record was found in Sierra for this bnum')
+      return
+    elsif @sierra.warnings.include?('This Sierra bib was deleted')
+      self.warn('Sierra bib for this bnum was deleted')
       return
     end
     @marc = @sierra.marc
     @ia = ia_record
-    if @ia.id.empty? || @ia.ark.empty?
+    unless @ia.id && @ia.ark
       self.warn('No Ark could be found for this record. Report record to LDSS.')
     end
   end
