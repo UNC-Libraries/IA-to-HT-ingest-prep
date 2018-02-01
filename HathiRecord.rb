@@ -45,6 +45,7 @@ class HathiRecord
   def get_hathi_marc
     hmarc = MARC::Record.new_from_hash(@sierra.marc.to_hash)
     hmarc.fields.delete_if { |f| f.tag =~ /001|003|9../ }
+    # As SierraBib stands now, this needs to be bnum w/o trailing 'a'
     hmarc.append(MARC::ControlField.new('001', @bnum))
     hmarc.append(MARC::ControlField.new('003', 'NcU'))
     @sierra.find_oclcnum
