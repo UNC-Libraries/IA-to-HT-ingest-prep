@@ -95,8 +95,11 @@ class HathiRecord
 
   def warn(message)
     @warnings << message
-    puts "#{@bnum}a\t#{message}\n"
-#    $err_log << "#{@bnum}\t#{message}\n"
+    # if given garbage bnum, we want that to display in error
+    # log rather than nothing
+    bnum = @bnum || @sierra.given_bnum
+    puts "#{bnum}\t#{message}\n"
+#   $err_log << "#{@bnum}\t#{message}\n"
   end
 
   def check_marc
