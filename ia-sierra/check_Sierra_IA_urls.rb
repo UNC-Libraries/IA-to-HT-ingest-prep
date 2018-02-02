@@ -22,7 +22,7 @@ left join sierra_view.subfield sf_y on sf_y.varfield_id = v.id
   and sf_y.tag = 'y'
 where v.marc_tag = '856'
 and v.field_content ~* 'archive.org'
---and v.field_content !~* 'url_tagged_for_replacement_jcm_20180118'
+--and v.field_content !~* 'url_tagged_for_replacement_'
 order by bnum
 SQL
 

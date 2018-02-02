@@ -1,6 +1,3 @@
-
-require 'rexml/document'
-require 'rexml/formatters/pretty'
 require_relative './IARecord'
 require_relative '../sierra_postgres_utilities/SierraBib'
 
@@ -15,13 +12,22 @@ class HathiRecord
     @warnings = []
     @sierra = sierra_bib
     @bnum = @sierra.bnum
-    if @sierra.warnings.include?('No record was found in Sierra for this bnum')
+    # Do you prefer this to something like
+    # if !@sierra.record_id  (continued below)...
+    if @sierra.warnings.include?('No record was found in Sierra for this bnum') ||
+       @sierra.warnings.include?('Cannot retrieve Sierra bib. Bnum must start with b')
       self.warn('No record was found in Sierra for this bnum')
+      return
+    # ...and
+    # elsif @sierra.deleted
+    # ?
+    elsif @sierra.warnings.include?('This Sierra bib was deleted')
+      self.warn('Sierra bib for this bnum was deleted')
       return
     end
     @marc = @sierra.marc
     @ia = ia_record
-    if @ia.id.empty? || @ia.ark.empty?
+    unless @ia.id && @ia.ark
       self.warn('No Ark could be found for this record. Report record to LDSS.')
     end
   end
@@ -44,6 +50,7 @@ class HathiRecord
   def get_hathi_marc
     hmarc = MARC::Record.new_from_hash(@sierra.marc.to_hash)
     hmarc.fields.delete_if { |f| f.tag =~ /001|003|9../ }
+    # As SierraBib stands now, this needs to be bnum w/o trailing 'a'
     hmarc.append(MARC::ControlField.new('001', @bnum))
     hmarc.append(MARC::ControlField.new('003', 'NcU'))
     @sierra.find_oclcnum
@@ -93,8 +100,11 @@ class HathiRecord
 
   def warn(message)
     @warnings << message
-    puts "#{@bnum}a\t#{message}\n"
-#    $err_log << "#{@bnum}\t#{message}\n"
+    # if given garbage bnum, we want that to display in error
+    # log rather than nothing
+    bnum = @bnum || @sierra.given_bnum
+    puts "#{bnum}\t#{message}\n"
+#   $err_log << "#{@bnum}\t#{message}\n"
   end
 
   def check_marc

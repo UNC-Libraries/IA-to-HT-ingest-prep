@@ -42,8 +42,22 @@ RSpec.describe HathiRecord do
       irec = IARecord.new({:identifier => 'otterbeinhymnalf00chur', :'identifier-ark' => 'ark:/13960/t05x3dc2n'})
       rec = HathiRecord.new(srec, irec)
       expect(rec.warnings).to include('No record was found in Sierra for this bnum')
-    end    
+    end
 
+    it 'does not write "no Sierra record found" warning when bib deleted' do
+      srec = SierraBib.new('b6780003')
+      irec = IARecord.new({:identifier => 'otterbeinhymnalf00chur', :'identifier-ark' => 'ark:/13960/t05x3dc2n'})
+      rec = HathiRecord.new(srec, irec)
+      expect(rec.warnings).to include('Sierra bib for this bnum was deleted')
+    end
+
+    it 'writes warning re: deleted Sierra records when bib deleted' do
+      srec = SierraBib.new('b6780003')
+      irec = IARecord.new({:identifier => 'otterbeinhymnalf00chur', :'identifier-ark' => 'ark:/13960/t05x3dc2n'})
+      rec = HathiRecord.new(srec, irec)
+      expect(rec.warnings).to include('Sierra bib for this bnum was deleted')
+    end
+    
   end
 
   #hathimarc
