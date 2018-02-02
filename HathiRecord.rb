@@ -12,10 +12,15 @@ class HathiRecord
     @warnings = []
     @sierra = sierra_bib
     @bnum = @sierra.bnum
+    # Do you prefer this to something like
+    # if !@sierra.record_id  (continued below)...
     if @sierra.warnings.include?('No record was found in Sierra for this bnum') ||
        @sierra.warnings.include?('Cannot retrieve Sierra bib. Bnum must start with b')
       self.warn('No record was found in Sierra for this bnum')
       return
+    # ...and
+    # elsif @sierra.deleted
+    # ?
     elsif @sierra.warnings.include?('This Sierra bib was deleted')
       self.warn('Sierra bib for this bnum was deleted')
       return
