@@ -12,16 +12,10 @@ class HathiRecord
     @warnings = []
     @sierra = sierra_bib
     @bnum = @sierra.bnum
-    # Do you prefer this to something like
-    # if !@sierra.record_id  (continued below)...
-    if @sierra.warnings.include?('No record was found in Sierra for this bnum') ||
-       @sierra.warnings.include?('Cannot retrieve Sierra bib. Bnum must start with b')
+    if @sierra.record_id == nil
       self.warn('No record was found in Sierra for this bnum')
       return
-    # ...and
-    # elsif @sierra.deleted
-    # ?
-    elsif @sierra.warnings.include?('This Sierra bib was deleted')
+    elsif @sierra.deleted
       self.warn('Sierra bib for this bnum was deleted')
       return
     end
@@ -33,15 +27,22 @@ class HathiRecord
   end
 
   def write_oclcnum_to_035?
+    # TODO: this used to work but no longer does. @sierra.oclcnum035s is no
+    # longer a thing (nor is @sierra.marc.oclcnum035s).
+    # Either the MARC::Record extension can save the set of cleaned
+    # oclc035s, or this can be done some other/better way
+    raise 'this is known not to work. see comment.'
     oclcnum = @sierra.oclcnum
-    return false if oclcnum == ''
+    return false unless oclcnum
     return true if !@sierra.oclcnum035s || !@sierra.oclcnum035s.include?(oclcnum)
     return false
   end
 
   def my955
-    my955 = MARC::DataField.new('955', ' ', ' ', ['b', @ia.ark], ['q', @ia.id])
-    if @ia.volume && !@ia.volume.empty?
+    ia_ark = @ia.ark.to_s
+    ia_id = @ia.id.to_s
+    my955 = MARC::DataField.new('955', ' ', ' ', ['b', ia_ark], ['q', ia_id])
+    if @ia.volume
       my955.append(MARC::Subfield.new('v', @ia.volume))
     end
     return my955
@@ -50,10 +51,8 @@ class HathiRecord
   def get_hathi_marc
     hmarc = MARC::Record.new_from_hash(@sierra.marc.to_hash)
     hmarc.fields.delete_if { |f| f.tag =~ /001|003|9../ }
-    # As SierraBib stands now, this needs to be bnum w/o trailing 'a'
-    hmarc.append(MARC::ControlField.new('001', @bnum))
+    hmarc.append(MARC::ControlField.new('001', @bnum.chop)) # chop trailing 'a'
     hmarc.append(MARC::ControlField.new('003', 'NcU'))
-    @sierra.find_oclcnum
     if self.write_oclcnum_to_035?
       hmarc.append(MARC::DataField.new('035', ' ', ' ',
           ['a', "(OCoLC)#{@sierra.oclcnum}"]
@@ -75,12 +74,12 @@ class HathiRecord
     xml << "  <leader>#{hathi_marc.leader}</leader>\n"
     marc.each do |f|
       if f.tag =~ /00[135678]/
-        data = (f.value =~ /[<>&"']/) ? self.escape_xml_reserved(f.value) : f.value
+        data = self.escape_xml_reserved(f.value)
         xml << "  <controlfield tag='#{f.tag}'>#{data}</controlfield>\n"
       else
         xml << "  <datafield tag='#{f.tag}' ind1='#{f.indicator1}' ind2='#{f.indicator2}'>\n"
         f.subfields.each do |sf|
-          data = (sf.value =~ /[<>&"']/) ? self.escape_xml_reserved(sf.value) : sf.value
+          data = self.escape_xml_reserved(sf.value)
           xml << "    <subfield code='#{sf.code}'>#{data}</subfield>\n"
         end
         xml << "  </datafield>\n"
@@ -90,6 +89,7 @@ class HathiRecord
   end  
 
   def escape_xml_reserved(data)
+    return data unless data =~ /[<>&"']/
     data.gsub('&', '&amp;').
          gsub('<', '&lt;').
          gsub('>', '&gt;').
