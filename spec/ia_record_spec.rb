@@ -18,8 +18,8 @@ RSpec.describe IARecord do
       expect(irec1.ark).to eq('ark:/13960/t9962ss6m')
     end
 
-    it 'sets bnum' do
-      expect(irec1.bnum).to eq('b2095036')
+    it 'sets bib_record_id' do
+      expect(irec1.bib_record_id).to eq('b2095036')
     end
 
     ihash2 = {:unc_bib_record_id=>"b2095036", :identifier=>"", :"identifier-ark"=>"ark:/13960/t9962ss6m", :volume=>"v. 550, no. 2", :publicdate=>"2015-02-02T18:38:50Z", :sponsor=>"University of North Carolina at Chapel Hill", :contributor=>"University Library, University of North Carolina at Chapel Hill", :collection=>"spandr,unclibraries,americana"}
@@ -42,11 +42,11 @@ RSpec.describe IARecord do
 
     ihash4 = {:unc_bib_record_id=>"", :identifier=>"elclavoardiendod550valc", :"identifier-ark"=>"ark:/13960/t9962ss6m", :volume=>"v. 550, no. 2", :publicdate=>"2015-02-02T18:38:50Z", :sponsor=>"University of North Carolina at Chapel Hill", :contributor=>"University Library, University of North Carolina at Chapel Hill", :collection=>"spandr,unclibraries,americana"}
     irec4 = IARecord.new(ihash4)
-    it 'sets bnum to nil when lacking' do
-      expect(irec4.bnum).to eq(nil)
+    it 'sets bib_record_id to nil when lacking' do
+      expect(irec4.bib_record_id).to eq(nil)
     end
-    it 'sets warning re missing bnum' do
-      expect(irec4.warnings).to include('No bnum in IA')
+    it 'sets warning re missing bib_record_id' do
+      expect(irec4.warnings).to include('No bib_record_id in IA')
     end        
 
     ihash5 = {:unc_bib_record_id=>"b2095036", :identifier=>"elclavoardiendod550valc", :"identifier-ark"=>"ark:/13960/t9962ss6m", :volume=>"", :publicdate=>"2015-02-02T18:38:50Z", :sponsor=>"University of North Carolina at Chapel Hill", :contributor=>"University Library, University of North Carolina at Chapel Hill", :collection=>"spandr,unclibraries,americana"}

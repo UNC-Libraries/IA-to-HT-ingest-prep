@@ -1,7 +1,7 @@
 require 'csv'
 
 class IARecord
-  attr_reader :id, :volume, :ark, :misc, :bnum, :inum, :hsh
+  attr_reader :id, :volume, :ark, :misc, :bib_record_id, :inum, :hsh
   attr_accessor :warnings
 
   # ia = IARecord.new({:identifier => 'otterbeinhymnalf00chur',
@@ -39,14 +39,14 @@ class IARecord
     hbnum = @hsh[:unc_bib_record_id].to_s.strip
     if hbnum
       if hbnum == ''
-        @warnings << 'No bnum in IA'
-        @bnum = nil
+        @warnings << 'No bib_record_id in IA'
+        @bib_record_id = nil
       else
-        @bnum = hbnum
+        @bib_record_id = hbnum
       end
     else
-      @bnum = nil
-      @warnings << 'No bnum in IA'
+      @bib_record_id = nil
+      @warnings << 'No bib_record_id in IA'
     end
 
     hvol = @hsh[:volume].to_s.strip
