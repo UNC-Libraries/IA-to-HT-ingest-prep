@@ -8,7 +8,8 @@ class SierraArchiveURL
 
   def initialize(hsh, bib: nil)
     @bnum = hsh['bnum']
-    @bib = bib || IASierraBib.new(@bnum)
+    #@bib = bib || SierraBib.new(@bnum)
+    @bib = SierraBib.new(@bnum)
     @notes = []
     @sfu = hsh['sfu'].to_s
     @sf3 = hsh['sf3'].to_s
@@ -16,9 +17,11 @@ class SierraArchiveURL
     @sfy = hsh['sfy'].to_s
     @ind2 = hsh['ind2'].to_s
     @url = hsh['field_content'].to_s
-    @serial = bib.serial?
-    @mono = bib.mono?
-    @oca_stats_count = bib.oca_ebnb_item_count
+    if bib
+      @serial = bib.serial?
+      @mono = bib.mono?
+      @oca_stats_count = bib.oca_ebnb_item_count
+    end
     self.ia_id
   end
 
@@ -64,12 +67,12 @@ class SierraArchiveURL
   end
 
   def get_url_call_number
-    m = @sfu.match(/call_number[^b]*(b[0-9]*)/)
+    m = @sfu.match(/(unc_bib_record_id|call_number)[^b]*(b[0-9]*)/)
     unless m
       @url_call_number = nil
       return
     end
-    @url_call_number = m[1].strip
+    @url_call_number = m[2].strip
   end
 
   def url_bib_record_id
@@ -91,10 +94,10 @@ class SierraArchiveURL
   end
 
   def do_checks
-    if self.mono_has_query_url?
-      @sfu, @sfx = @sfx, @sfu
-      @sfx = nil if @sfx.empty?
-    end
+    #if self.mono_has_query_url?
+    #  @sfu, @sfx = @sfx, @sfu
+    #  @sfx = nil if @sfx.empty?
+    #end
     self.serial_has_sf3_content?
     self.serial_has_detail_url?
     self.mono_id_not_found_in_IA?
@@ -133,15 +136,15 @@ class SierraArchiveURL
 
   def mono_sf3_empty_IA_vol_populated?
     return nil if !ia
-    if @mono && @sf3.empty? && !@ia.volume.empty?
+    if @mono && @sf3.empty? && @ia.volume == nil
       @notes << 'mono url has no sf3 but IA has vol info'
       return true
     end
   end
 
   def mono_has_sf3_not_matching_IA_vol?
-    return nil if !ia
-    if @mono && !@sf3.empty? && "|3#{@sf3}" != @ia.volume
+    return nil if !ia || @serial
+    unless @sf3.empty? || "|3#{@sf3}" == self.proper.proper_sf3
       @notes << 'mono url has sf3 that does not match IA vol'
       return true
     end
@@ -155,7 +158,7 @@ class SierraArchiveURL
   end
 
   def is_orig_print_rec?
-    short_bnum = @bib.trunc_bnum
+    short_bnum = @bib.bnum_trunc
     if self.url_bib_record_id == short_bnum || (@ia && @ia.bib_record_id == short_bnum)
       return true
     else

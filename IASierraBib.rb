@@ -2,22 +2,19 @@ require_relative './IARecord'
 require_relative './IASierra856'
 require_relative '../sierra_postgres_utilities/SierraBib'
 
-$c.close if $c
-$c = Connect.new
-
 class SierraBib
   attr_reader :ia
 
   def ia_ids_in_856u
-    my856s = self.m856s
-    return nil if !my856s
-    archive_856s = my856s.select { |v| v['field_content'] =~ /archive.org/ }
-    return nil if !archive_856s
-    archive_856u_s = archive_856s.map { |v| subfield_from_field_content('u', v['field_content'])}
+    return nil if !self.archive_856s
+    archive_856u_s = self.archive_856s.map { |v| subfield_from_field_content('u', v['field_content'])}
     m856_ia_ids = archive_856u_s.map { |sfu|
       m = sfu.match(/details\/(.*)/)
-      m ? m[1].strip : []
+      m ? m[1].strip : nil
     }
+    m856_ia_ids.compact!
+    return nil if m856_ia_ids.empty?
+    return m856_ia_ids
   end
 
   # array of ia_ids with this bnum
@@ -27,7 +24,7 @@ class SierraBib
   end
 
   def m856s_needed
-    if self.serial? && !self.has_query_url
+    if self.serial? && !self.has_query_url?
       ia = @ia[0]
       return [IASierra856.new(self, ia).proper_856]
     elsif self.mono?
@@ -57,29 +54,33 @@ class SierraBib
     true if self.rec_type == 'mono'
   end
 
-  def non_IA_856s_w_ind2
+  def relevant_nonIA_856s
+    # non-IA 856s with indicators 0 or 1 (link is to resource
+    # or version of resource, not something like Table of Contents)
     my856s = self.m856s
-    return [] if !my856s
-    non_IA_856s =
-      my856s.select { |v| v['field_content'] !~ /archive.org/ &&
-                          v['marc_ind2'] 
-      }
-
+    return nil if !my856s
+    my856s.select! { |v| v['field_content'] !~ /archive.org/ &&
+                          %w(0 1).include?(v['marc_ind2'])
+    }
+    return nil if my856s.empty?
+    my856s
   end
 
-  def has_non_IA_856s_w_ind2?
-    return true unless self.non_IA_856s_w_ind2.empty?
-  end
-
-  def has_query_url
+  def archive_856s
     my856s = self.m856s
     return nil if !my856s
     archive_856s = my856s.select { |v| v['field_content'] =~ /archive.org/ }
     return nil if !archive_856s
-    archive_856u_s = archive_856s.map { |v| subfield_from_field_content('u', v['field_content'])}
+    return archive_856s
+  end
+
+  def has_query_url?
+    return false if !self.archive_856s
+    archive_856u_s = self.archive_856s.map { |v| subfield_from_field_content('u', v['field_content'])}
     archive_856u_s.each do |m856u|
-      return true if m856u.match(/unc_bib_record_id.*#{@bnum}/)
+      return true if m856u.match(/unc_bib_record_id.*#{self.bnum_trunc}/)
     end
+    return false
   end
 
   def has_OA_530?
@@ -101,22 +102,24 @@ class SierraBib
   end
 
   def has_oca_ebnb_item?
-    return self.oca_ebnb_item_count.length > 0
+    return self.oca_ebnb_item_count > 0
   end
 
   def proper_949
-    stats_rec_type =
-      if self.serial?
-        'journal'
-      elsif self.mono?
-        'book'
-      end
+    if self.serial?
+      item_loc = 'erri'
+      stats_rec_type = 'journal'
+    elsif self.mono?
+      item_loc = 'ebnb'
+      stats_rec_type = 'book'
+    end
     # "\\1" makes the indicators \1
-    return "=949  \\1$g1$lebnb$h0$rn$t11$u-$jOCA electronic #{stats_rec_type}"
+    return "=949  \\1$g1$l#{item_loc}$h0$rn$t11$u-$jOCA electronic #{stats_rec_type}"
   end
 
   def proper_530
-    return "=530  \\$aAlso available via the World Wide Web."
+    # "\\\\" makes the indicators \\
+    return "=530  \\\\$aAlso available via the World Wide Web."
   end
 
   def has_IA_recs_with_dupe_vol?

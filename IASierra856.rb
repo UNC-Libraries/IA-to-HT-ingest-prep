@@ -29,11 +29,15 @@ class IASierra856
   end
 
   def proper_sf3
-    prefix = @bib.has_non_IA_856s_w_ind2? ? 'Internet Archive' : ''
+    if @bib.relevant_nonIA_856s
+      prefix = 'Internet Archive'
+    else
+      prefix = ''
+    end
     if @serial
       content = prefix
     elsif @mono
-      if @ia.volume.empty?
+      if @ia.volume == nil
         content = prefix
       elsif !prefix.empty?
         content = "#{prefix}, #{@ia.volume}"
