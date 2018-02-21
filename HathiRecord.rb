@@ -27,15 +27,11 @@ class HathiRecord
   end
 
   def write_oclcnum_to_035?
-    # TODO: this used to work but no longer does. @sierra.oclcnum035s is no
-    # longer a thing (nor is @sierra.marc.oclcnum035s).
-    # Either the MARC::Record extension can save the set of cleaned
-    # oclc035s, or this can be done some other/better way
-    raise 'this is known not to work. see comment.'
     oclcnum = @sierra.oclcnum
     return false unless oclcnum
-    return true if !@sierra.oclcnum035s || !@sierra.oclcnum035s.include?(oclcnum)
-    return false
+    my035oclcnums = @sierra.marc.get_035oclcnums
+    return false if my035oclcnums && my035oclcnums.include?(oclcnum)
+    return true
   end
 
   def my955
@@ -104,97 +100,84 @@ class HathiRecord
     # log rather than nothing
     bnum = @bnum || @sierra.given_bnum
     puts "#{bnum}\t#{message}\n"
-#   $err_log << "#{@bnum}\t#{message}\n"
   end
 
   def check_marc
     self.get_hathi_marc if !@hathi_marc
-    if @marc.leader && !@marc.leader.empty?
-      if @marc.leader.length != 24
-        warn('Leader is longer or shorter than 24 characters. Report to cataloging staff to fix record.')
-      end
-      if @marc.leader[6] !~ /a|[c-g]|[i-k]|m|o|p|r|t/
-        warn('LDR/06 (rec_type) is an undefined value. Report to cataloging staff to fix record.')
-      end
-      if @marc.leader[7] !~ /[a-d]|i|m|s/
-        warn('LDR/07 (blvl) is an undefined value. Report to cataloging staff to fix record.')
-      end
-    else
-      warn('This bib record has no Leader. A Leader field is required. Report to cataloging staff to add Leader to record.')
+
+    # check leader
+    if @marc.no_leader?
+      warn('This bib record has no Leader. A Leader field is required. Report to cataloging staff to add Leader to record.')      
     end
-    if @multiple_LDRs_flag
+    if @marc.bad_leader_length?
+      warn('Leader is longer or shorter than 24 characters. Report to cataloging staff to fix record.')
+    end
+    if @marc.ldr06_undefined?
+      warn('LDR/06 (rec_type) is an undefined value. Report to cataloging staff to fix record.')
+    end
+    if @marc.ldr07_undefined?
+      warn('LDR/07 (blvl) is an undefined value. Report to cataloging staff to fix record.')
+    end
+    #todo: if @marc.multiple_leader?
+    if @sierra.multiple_LDRs_flag
       warn('This bib record has multiple Leader fields, which should not be. Report to cataloging staff to fix record.')
     end
 
-    if @marc.find_all { |f| f.tag == '001' }.length == 0
+    # check 001
+    if @marc.no_001?
       warn('This bib does not contain an 001 field, which it should have. Report to cataloging staff to fix 001 field.')
-    elsif @marc.find_all { |f| f.tag == '001' }.length >= 2
+    end
+    if @marc.multiple_001?
       warn('This bib has more than one 001 field, which is a non-repeatable field. Report to cataloging staff to fix 001 field.')
     end
 
-    if @marc.find_all { |f| f.tag == '003' }.length >= 2
+     # check 003
+    if @marc.multiple_003?
       warn('This bib has more than one 003 field, which is a non-repeatable field. Report to cataloging staff to fix 003 field.')
     end
 
-    if @marc.find_all { |f| f.tag == '008' }.length == 0
+    # check 008
+    if @marc.no_008?
       warn('This bib does not contain an 008 field, which is a required field. Report to cataloging staff to fix 008 field.')
-    elsif @marc.find_all { |f| f.tag == '008' }.length >= 2
+    end
+    if @marc.multiple_008?
       warn('This bib has more than one 008 field, which is a non-repeatable field. Report to cataloging staff to fix 008 field.')
-    else
-      # This check to make sure the 008 is 40 chars long. Afaik Sierra postgres
-      # would store an 008 of just "a" and an 008 of "a      [...40 chars]"
-      # exactly the same. We'd retrieve both as "a" followed by 39 spaces.
-      # We're already checking for a valid language code in 008/35-37
-      # and 008/38-39 don't need to be non-blank. So whether this check
-      # has any added value seems questionable.
-      my008 = @marc['008'].value
-      if my008.length != 40
+    end    
+    if @marc.bad_008_length?
         warn("This bib's 008 field is not 40 characters long, which it should be. Report to cataloging staff to fix 008 field.")
-      end
-      unless @sierra.lang008[1]
-        # require valid language code, but allow discontinued language codes
-        warn("This bib 008/35-37 (language_code) is #{@sierra.lang008[0]} which is not a valid language code. Report to cataloging staff to fix 008 field.")
-      end
+    end
+    unless @sierra.lang008[1]
+      # require valid language code, but allow discontinued language codes
+      warn("This bib 008/35-37 (language_code) is #{@sierra.lang008[0]} which is not a valid language code. Report to cataloging staff to fix 008 field.")
     end
 
-
-
-    if @marc.find_all { |f| f.tag == '245' }.length == 0
+    # check 245
+    if @marc.no_245?
       warn('This bib does not contain an 245 field, which is a required field. Report to cataloging staff to fix 245 field.')
-    elsif @marc.find_all { |f| f.tag == '245' }.length >= 2
+    end
+    if @marc.multiple_245?
       warn('This bib has more than one 245 field, which is a non-repeatable field. Report to cataloging staff to fix 245 field.')
-    else
-      sf245s = @marc['245'].subfields.map { |x| x.code }
-      if !sf245s.include?('a') && !sf245s.include?('k')
-        warn('This bib does not contain an 245 field with a $a or $k, which is a required field. Report to cataloging staff to fix 245 field.')
-      end
+    end
+    if @marc.no_245_has_ak?
+      warn('This bib does not contain an 245 field with a $a or $k, which is a required field. Report to cataloging staff to fix 245 field.')
     end
 
-    if @marc.find_all { |f| f.tag == '300' }.length == 0
+    # check 300
+    if @marc.no_300?
       warn('This bib does not contain an 300 field, which we need for HathiTrust. Report to cataloging staff to fix 300 field.')
-    else
-      # create array containing, for each 300 field, an array of its subfield codes
-      # e.g. [ ['a', 'c'], ['a', 'b', 'c'], ['d'] ]
-      sf_codes = @marc.find_all { |f| f.tag == '300' }.map { |f| f.subfields.map{ |s| s.code } }
-      if sf_codes.reject { |x| x.include?('a') }.length > 0
-        warn('This bib contains a 300 without a 300$a, which should not be for HathiTrust. Report to cataloging staff to fix 300 field.')
-      end
+    end
+    if @marc.m300_without_a?
+      warn('This bib contains a 300 without a 300$a, which should not be for HathiTrust. Report to cataloging staff to fix 300 field.')
     end
 
+    # check oclc 035s
     # this needs to be @hathi_marc rather than @marc b/c @marc does not contain
     # 035s we've written from an 001
-
-    my035s = @hathi_marc.find_all { |f| f.tag == '035'}
-    oclc035s = []
-    my035s.each do |m035|
-      oclc035s << m035.subfields.select { |sf| sf.code == 'a' and sf.value.match(/^\(OCoLC\)/) }
-    end
-    oclc035s.flatten!
-    oclcnum035s = oclc035s.map { |sf| sf.value.gsub(/\(OCoLC\)0*/,'') }
-    if oclcnum035s.length == 0
+    if @hathi_marc.no_oclc_035?
       warn('This bib does not contain an 035 field with an OCLC number and does not have an OCLC number in the 001. An OCLC number is required for Hathitrust. Report to cataloging staff.')
-    elsif oclcnum035s.length >= 2
-      warn('This bib contains multiple 035 fields with OCLC numbers or contains an 035 and an 001 with distinct OCLC numbers. Report to cataloging staff to fix.')      
+    end
+    if @hathi_marc.multiple_oclc_035?
+      warn('This bib contains multiple 035 fields with OCLC numbers or contains an 035 and an 001 with distinct OCLC numbers. Report to cataloging staff to fix.')
     end
   end
 

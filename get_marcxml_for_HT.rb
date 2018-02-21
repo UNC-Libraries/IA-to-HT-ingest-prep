@@ -29,7 +29,7 @@ https://archive.org/advancedsearch.php?q=scanningcenter%3A(chapelhill)+AND+unc_b
 # standard addl fields: publicdate, sponsor, contributor, collection
 ifile = IARecord.import_search_csv('search.csv')
 headers = ifile[0].keys
-#ifile.sort_by! { |r| r[:unc_bib_record_id] }
+ifile.sort_by! { |r| r[:unc_bib_record_id] }
 
 # input = arks UNC contributed to HT to date
 arks = File.read('nc01.arks.txt').split("\n")
@@ -43,14 +43,13 @@ end
 
 
 # this logs details of bib/marc errors
-$err_log = File.open('bib_errors.txt', 'w')
+err_log = File.open('bib_errors.txt', 'w')
 # this logs general disposition of everything
 $ia_logfile = CSV.open('ia_log.csv', 'w')
 $ia_logfile << ['reason', headers].flatten
 
 
 def ia_log(reason, ia_record)
-  #$ia_logfile << [reason, ia_record[0..-1]].flatten
   $ia_logfile << [reason, ia_record.to_a].flatten
 end
 
@@ -61,7 +60,6 @@ File.open('hathi_marcxml.xml',"w:UTF-8") do |xml_out|
   prev_bnum = nil
   prev_bib = nil
   ifile.each do |ia_record|
-    puts ia_record
     ia = IARecord.new(ia_record)
     p ia
     bnum = ia.bib_record_id
@@ -87,13 +85,16 @@ File.open('hathi_marcxml.xml',"w:UTF-8") do |xml_out|
       ia_log('record already in HT', ia_record)
     elsif !hathi.manual_write_xml(xml_out)
       ia_log('failed MARC checks', ia_record)
+      hathi.warnings.each do |warning|
+        err_log << "#{hathi.bnum}\t#{warning}\n"
+      end
     else
       ia_log('wrote xml', ia_record)
     end
   end
   xml_out << xml_footer
 end
-$err_log.close
+err_log.close
 $ia_logfile.close
 
 errors = File.read('bib_errors.txt').split("\n")

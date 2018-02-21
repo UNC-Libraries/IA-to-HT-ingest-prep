@@ -1,8 +1,14 @@
 require 'csv'
+require 'yaml'
+
+
+
 
 class IARecord
-  attr_reader :id, :volume, :ark, :misc, :bib_record_id, :inum, :hsh
+  attr_reader :id, :volume, :ark, :misc, :bib_record_id, :inum, :hsh, :branch
   attr_accessor :warnings
+
+  @@branch_map = YAML.load_file('coll_to_branch_map.yaml')
 
   # ia = IARecord.new({:identifier => 'otterbeinhymnalf00chur',
   #                    :'identifier-ark' => 'ark:/13960/t05x3dc2n',
@@ -92,13 +98,69 @@ class IARecord
     # 1867/1868
     # 1867/68
     # 1867-68
+    # 187-
+    # 18--
     return false if @volume == nil
     volume = @volume[0] == '(' ? @volume[1..-1] : @volume
     return false if volume =~ /^[[:alpha:]]/
     return false if volume =~ /^[0-9]{4}([^0-9].*)?$/
+    return false if volume =~ /^[0-9]{2}[0-9-]-&/
     return false if volume =~ /^[0-9]+(st|nd|rd|th|d|er|re|e|eme|de)/
     return false if volume =~ /^#/ if octothorp_allowed
     true
   end
 
+  def ncdhc?
+    unless @hsh.keys.include?(:collection)
+      raise 'Collection field was not found in IA data; cannot determine branch'
+    end
+    return true if @hsh[:collection].split(",").include?('ncdhc')
+  end
+
+  def branch(mapping: nil)
+    # uses default @@branch_map unless alternate mapping provided
+    @branch ||= get_branch(mapping: mapping)
+  end
+
+  def get_branch(mapping: nil)
+    # uses default @@branch_map unless alternate mapping provided
+    unless @hsh.keys.include?(:collection)
+      raise 'Collection field was not found in IA data; cannot determine branch'
+    end
+    mapping = @@branch_map unless mapping
+    coll_arry = @hsh[:collection].split(",")
+    if coll_arry.include?('ncdhc')
+      @branch = 'ncdhc'
+      return @branch
+    end
+    coll_arry.each do |coll|
+      if mapping.include?(coll)
+        @branch = mapping[coll]
+        return @branch
+      end
+    end
+
+    #Try contributor if collection isn't working
+    if @hsh.keys.include?(:contributor)
+      contributor = @hsh[:contributor]
+      if contributor == 'School of Government Library, University of North Carolina at Chapel Hill'
+        @branch = 'SOG'
+        return @branch
+      end
+    end
+
+    # Davis will check item out if no good collection info.
+    coll_arry.reject! { |c| c =~ /^fav-/ }
+    coll_arry.reject! { |c| c =~ /^(uncill|unclibraries|americana)$/}
+    if coll_arry.empty?
+      @branch = 'Davis'
+      return @branch
+    end
+
+    # If collection info exists but it's not assigned a branch
+    #puts "unrecognized collection"
+    #puts self.hsh
+    @branch = "unrecognized"
+    return @branch
+  end
 end

@@ -9,9 +9,9 @@ require_relative '../IARecord.rb'
 # after altering the batch load note
 # combines urls on the same bnum into one record
 # creates 856|3 where needed
-#   records with non-IA urls get |3Internet Archive
+#   records with non-IA urls (ind2 in [0, 1]) get |3Internet Archive
 #   monos with ia.volume content get |3[Internet Archive, ]ia.volume
-# sorts 856s by subfield 3, but needs to just pad all numbers then sort
+# sorts 856s by subfield 3 with all numbers padded
 
 # re: distinguish_if_needs_oca
 #   if on outputs two files that can be loaded separately with diff profiles
@@ -19,12 +19,14 @@ require_relative '../IARecord.rb'
 # so load this output, then run checks for dupe_sf3, dismabiguation_needed, sort_double_checking,
 # global update duplicate oca item recs unless distinguish_if_needs_oca
 
-distinguish_if_needs_oca = false
+distinguish_if_needs_oca = true
 
 def sortable_sf3(m856)
   sf3 = m856.match(/\|3[^|]*/)
   return '' unless sf3
-  sort_on = sf3.to_s.gsub(/([0-9]+)/, '\1'.rjust(10, '0'))
+  sf3.to_s.gsub(/([0-9]+)/) do |m|
+    $1.rjust(10, '0')
+  end
 end
 
 def to_marcedit(string)
@@ -32,8 +34,17 @@ def to_marcedit(string)
   return string + "\r\n"
 end
 
+$c.close if $c
+$c = Connect.new
+
 ifile = IARecord.import_search_csv('search.csv')
 ifile.sort_by! { |r| r[:unc_bib_record_id] }
+
+# input = ia_ids with IA-metadata issues to be excluded from HT-ingest (until fixed)
+problem_ids = []
+problem_ids = CSV.read('../problems.csv', headers: true)
+problem_ids = problem_ids.to_a[1..-1].map { |r| r[0] }
+ifile.reject! { |r| problem_ids.include?(r[:identifier])}
 
 bnums = {}
 ifile.each do |ia_hash|
@@ -59,10 +70,13 @@ bnums.entries.each do |bnum, ia_recs|
   bib = SierraBib.new(bnum)
   bib.ia=(ia_recs)
   blah = bib
-  next unless bib.record_id   #bib deleted or bnum invalid
-  next if bib.suppressed #TODO b13628094 had OCA link removed because discarded
+  puts "del or not  #{bib.given_bnum}" if bib.deleted || bib.record_id == nil
+  puts "suppressed  #{bib.given_bnum}" if bib.suppressed
+  #todo: any logging of deleted/suppressed bibs
+  next if bib.deleted || bib.record_id == nil
+  next if bib.suppressed
   if distinguish_if_needs_oca
-    ofile = bib.has_OCA_ebnb_item? ? has_oca_item : needs_oca_item
+    ofile = bib.has_oca_ebnb_item? ? has_oca_item : needs_oca_item
   end
   m856s_needed = bib.m856s_needed
   next unless m856s_needed
@@ -72,7 +86,7 @@ bnums.entries.each do |bnum, ia_recs|
   m856s_needed.sort_by! { |m856| sortable_sf3(m856) }
   m856s_needed.each { |m856| ofile << to_marcedit(m856) }
   if distinguish_if_needs_oca
-    ofile << to_marcedit(bib.proper_949) unless bib.has_OCA_ebnb_item?
+    ofile << to_marcedit(bib.proper_949) unless bib.has_oca_ebnb_item?
   else
     ofile << to_marcedit(bib.proper_949)
   end
@@ -85,6 +99,3 @@ if distinguish_if_needs_oca
 else
   ofile.close
 end
-
-  #todo warn if bad entries
-  # check for ebnb, 530 or whatever, etc., savine possibly
