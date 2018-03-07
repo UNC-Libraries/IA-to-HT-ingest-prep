@@ -25,7 +25,9 @@ ifile.each do |ia_hash|
 end
 
 ofile = CSV.open('check_IA_data_for_problems.csv', 'w')
-headers = %w(identifier priority problems bnum bib_record_id ia.volume ia_rec_ct_on_bnum HTstatus link_in_sierra? notHT_ct_on_bnum ark publicdate sponsor contributor collection branch)
+headers = %w(identifier URL priority problems bnum bib_record_id ia.volume
+             ia_rec_ct_on_bnum HTstatus link_in_sierra? notHT_ct_on_bnum ark
+             publicdate sponsor contributor collection branch)
 ofile << headers
 prev_bnum = 'unlikely_initial_string'
 prev_bib = nil
@@ -111,6 +113,7 @@ bnums.entries.each do |temp_bnum, ia_recs|
     end
     ofile << [
       ia.id,
+      "https://archive.org/details/#{ia.id}",
       priority,
       notes.join(';;;'),
       bib.bnum,
