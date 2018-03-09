@@ -41,6 +41,13 @@ if File.file?('problems.csv')
   problem_ids = problem_ids.to_a[1..-1].map { |r| r[0] }
 end
 
+# input = bib_record_ids to be excluded from HT-ingest
+#   e.g. some sheet music bibs that were scribed but it was decided should
+#     not be sent to HT
+# if at some point we also want to exclude certain ia_ids (instead of bibs),
+# we can add that
+exclude_bibs = File.read('ht_exclude_bib.txt').split("\n")
+exclude_bibs.select! { |x| x =~ /^b[0-9]+$/ }
 
 # this logs details of bib/marc errors
 err_log = File.open('bib_errors.txt', 'w')
@@ -63,6 +70,10 @@ File.open('hathi_marcxml.xml',"w:UTF-8") do |xml_out|
     ia = IARecord.new(ia_record)
     p ia
     bnum = ia.bib_record_id
+    if exclude_bibs.include?(bnum)
+      ia_log('bib blacklisted', ia_record)
+      next
+    end
     if problem_ids
       if problem_ids.include?(ia.id)
         problem_id_exclusion += 1

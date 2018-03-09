@@ -8,7 +8,7 @@ class IARecord
   attr_reader :id, :volume, :ark, :misc, :bib_record_id, :inum, :hsh, :branch
   attr_accessor :warnings
 
-  @@branch_map = YAML.load_file('coll_to_branch_map.yaml')
+  @@branch_map = YAML::load_file(File.join(__dir__, 'coll_to_branch_map.yaml'))
 
   # ia = IARecord.new({:identifier => 'otterbeinhymnalf00chur',
   #                    :'identifier-ark' => 'ark:/13960/t05x3dc2n',
