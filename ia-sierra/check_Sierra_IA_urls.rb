@@ -17,11 +17,12 @@ left join sierra_view.subfield sf_u on sf_u.varfield_id = v.id
 left join sierra_view.subfield sf_3 on sf_3.varfield_id = v.id
   and sf_3.tag = '3'
 left join sierra_view.subfield sf_x on sf_x.varfield_id = v.id
-  and sf_x.tag = 'x'
+  and sf_x.tag = 'x' and sf_x.content !~* 'ocalink_jcm'
 left join sierra_view.subfield sf_y on sf_y.varfield_id = v.id
   and sf_y.tag = 'y'
 where v.marc_tag = '856'
-and v.field_content ~* 'archive.org'
+and v.field_content ~* '\\|xocalink_jcm'
+--and v.field_content ~* 'archive\.org'
 --and v.field_content !~* 'url_tagged_for_replacement_'
 order by bnum
 SQL
@@ -68,7 +69,7 @@ $c.results.entries.each do |m856|
   end
   url = SierraArchiveURL.new(m856, bib: bib)
   if url.has_no_archive_856u?
-    ofile << [url.bnum, url.notes.join(';;;')]
+    ofile << [url.bnum, url.notes.join(';;;'), '', '', url.ia_id.to_s, url.sfu, url.sf3, url.sfx, url.sfy, '', url.url_bib_record_id.to_s]
     next
   end
   # identify URL's IA record
@@ -84,7 +85,7 @@ $c.results.entries.each do |m856|
     url.ia=(my_ia)
   else
     url.notes << 'ia_id or bib_record_id not found in IA'
-    ofile << [url.bnum, url.notes.join(';;;')]
+    ofile << [url.bnum, url.notes.join(';;;'), '', '', url.ia_id.to_s, url.sfu, url.sf3, url.sfx, url.sfy, '', url.url_bib_record_id.to_s]
     next
   end
   puts temp_bnum

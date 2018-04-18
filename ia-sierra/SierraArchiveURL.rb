@@ -150,6 +150,11 @@ class SierraArchiveURL
     end
   end
 
+  def mono_lacks_needed_sf3_IA_designator?
+    return nil if !ia
+    #todo
+  end
+
   def mono_has_query_url?
     if @mono && !@ia_id
       @notes << 'mono has query url'
