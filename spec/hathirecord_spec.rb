@@ -1,5 +1,8 @@
 require_relative '../HathiRecord'
 
+$c.close if $c
+$c = Connect.new
+
 RSpec.describe HathiRecord do
 
   describe 'my955' do

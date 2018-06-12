@@ -3,7 +3,7 @@ require_relative '../IASierraBib'
 
 class SierraArchiveURL
   attr_reader :bnum, :mat_type, :ia_id, :sfu, :sf3, :sfx, :sfy,
-    :oca_stats_count, :ind2, :bib, :proper
+    :oca_stats_count, :ind2, :bib, :proper, :url
   attr_accessor :ia, :notes
 
   def initialize(hsh, bib: nil)
@@ -20,7 +20,7 @@ class SierraArchiveURL
     if bib
       @serial = bib.serial?
       @mono = bib.mono?
-      @oca_stats_count = bib.oca_ebnb_item_count
+      @oca_stats_count = bib.oca_items.to_a.count
     end
     self.ia_id
   end
@@ -45,6 +45,7 @@ class SierraArchiveURL
     end
   end
 
+  # fix this for removal of self.proper.proper_856_content
   def sierra_856_perfect?
     @url == self.proper.proper_856_content
   end

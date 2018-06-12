@@ -1,32 +1,15 @@
 
 require 'csv'
-load 'HathiRecord.rb'
+require_relative 'HathiRecord'
 
 $c.close if $c
 $c = Connect.new
 
-xml_header = <<-XML
-<?xml version='1.0'?>
-  <collection xmlns='http://www.loc.gov/MARC21/slim' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='http://www.loc.gov/MARC21/slim http://www.loc.gov/standards/marcxml/schema/MARC21slim.xsd'>
-XML
-xml_footer = '</collection>'
-
-=begin
-bnum = 'b2095085'
-bib = SierraBib.new(bnum)
-ia = IARecord.new('quincediasenital551vald', 'ark:/13960/t0fv1tg4z', 'v. 551')
-hathi = HathiRecord.new(bib, ia)
-=end
-
-=begin
-query not limited by date or by ncdhc collection status
-https://archive.org/advancedsearch.php?q=scanningcenter%3A(chapelhill)+AND+unc_bib_record_id%3A%5B*+TO+*%5D+AND+publicdate%3A%5B2001-01-03+TO+null&fl%5B%5D=unc_bib_record_id,identifier,identifier-ark,volume,publicdate,sponsor,contributor,collection&sort%5B%5D=&sort%5B%5D=&sort%5B%5D=&rows=5000000&page=1&output=csv&callback=callback&save=yes
-
-=end
 
 # input = IA search.csv results for prospective HT-ingest
-# essential fields: bnum, id, ark, vol
-# standard addl fields: publicdate, sponsor, contributor, collection
+#   essential fields: bnum, id, ark, vol
+#   standard addl fields: publicdate, sponsor, contributor, collection
+# see readme for query link(s)
 ifile = IARecord.import_search_csv('search.csv')
 headers = ifile[0].keys
 ifile.sort_by! { |r| r[:unc_bib_record_id] }
@@ -60,10 +43,10 @@ def ia_log(reason, ia_record)
   $ia_logfile << [reason, ia_record.to_a].flatten
 end
 
-blah = ''
+
 problem_id_exclusion = 0
-File.open('hathi_marcxml.xml',"w:UTF-8") do |xml_out|
-  xml_out << xml_header
+File.open('hathi_marc.xml',"w:UTF-8") do |xml_out|
+  xml_out << MARC::XML_HEADER
   prev_bnum = nil
   prev_bib = nil
   ifile.each do |ia_record|
@@ -74,27 +57,27 @@ File.open('hathi_marcxml.xml',"w:UTF-8") do |xml_out|
       ia_log('bib blacklisted', ia_record)
       next
     end
-    if problem_ids
-      if problem_ids.include?(ia.id)
-        problem_id_exclusion += 1
-        ia_log('on problems.csv', ia_record)
-        next
-      end
+    if problem_ids&.include?(ia.id)
+      problem_id_exclusion += 1
+      ia_log('on problems.csv', ia_record)
+      next
     end
-    bib = prev_bnum == bnum ? prev_bib : SierraBib.new(bnum)
+    if prev_bnum == bnum
+      bib = prev_bib
+    else
+      bib = SierraBib.new(bnum)
+    end
     hathi = HathiRecord.new(bib, ia)
-    blah = hathi
     puts bnum
-    use_old_record = true if prev_bnum == bnum
-    prev_bnum = bnum
-    prev_bib = bib
+
     if !hathi.warnings.empty?
       ia_log('no sierra record', ia_record)
     elsif !hathi.ia.ark
       ia_log('no IA ark_id found', ia_record)
     elsif arks.include?(hathi.ia.ark)
       ia_log('record already in HT', ia_record)
-    elsif !hathi.manual_write_xml(xml_out)
+    elsif !hathi.manual_write_xml(outfile: xml_out,
+                                  strict: true)
       ia_log('failed MARC checks', ia_record)
       hathi.warnings.each do |warning|
         err_log << "#{hathi.bnum}\t#{warning}\n"
@@ -102,8 +85,11 @@ File.open('hathi_marcxml.xml',"w:UTF-8") do |xml_out|
     else
       ia_log('wrote xml', ia_record)
     end
+
+    prev_bnum = bnum
+    prev_bib = bib
   end
-  xml_out << xml_footer
+  xml_out << MARC::XML_FOOTER
 end
 err_log.close
 $ia_logfile.close

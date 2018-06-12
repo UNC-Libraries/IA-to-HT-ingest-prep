@@ -2,7 +2,7 @@ require_relative 'SierraArchiveURL.rb'
 require_relative '../IASierraBib.rb'
 require_relative '../IASierra856.rb'
 require_relative '../IARecord.rb'
-require_relative '../../sierra_postgres_utilities/SierraBib.rb'
+require_relative '../../sierra-postgres-utilities/lib/sierra_postgres_utilities.rb'
 
 
 query = <<-SQL
@@ -111,6 +111,7 @@ $c.results.entries.each do |m856|
     url.have_jurisdiction?.to_s,
     url.proper.proper_sf3.to_s,
     url.proper.proper_sfu.to_s,
+    # fix for removal of proper_856_content
     url.proper.proper_856_content.to_s,
     url.sierra_856_perfect?.to_s,
     url.bib.fake_leader,
