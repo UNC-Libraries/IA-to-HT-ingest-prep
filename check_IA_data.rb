@@ -5,8 +5,6 @@ require_relative 'IARecord'
 # skip any ia items with in 'ncdhc' collection?
 skip_ncdhc = true
 
-$c = Connect.new
-
 ifile = IARecord.import_search_csv('search.csv')
 ifile.sort_by! { |r| r[:unc_bib_record_id] }
 arks = File.read('nc01.arks.txt').split("\n")

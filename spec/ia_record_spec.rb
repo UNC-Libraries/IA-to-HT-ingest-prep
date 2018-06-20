@@ -1,8 +1,5 @@
 require_relative '../IARecord'
 
-$c.close if $c
-$c = Connect.new
-
 RSpec.describe IARecord do
 
   describe 'initialize' do

@@ -27,10 +27,7 @@ and v.field_content ~* '\\|xocalink_jcm'
 order by bnum
 SQL
 
-$c.close if $c
-$c = Connect.new()
-
-$c.make_query(query)
+SierraDB.make_query(query)
 
 
 ifile = IARecord.import_search_csv('search.csv')
@@ -57,7 +54,7 @@ ofile << %w( bnum notes bib_locs blvl mat_type ia_id sfu sf3 sfx sfy short_bnum 
              is_orig_print_rec proper_url_count oca_stats_count have_jurisdiction proper_sf3 proper_sfu proper_856_content perfect_856 fake_leader proper_907 proper_856 all_proper_856s)
 prev_bnum = 'unlikely_initial_string'
 prev_bib = nil
-$c.results.entries.each do |m856|
+SierraDB.results.entries.each do |m856|
   # intialize new SierraBib or re-use previous
   temp_bnum = m856['bnum']
   if temp_bnum == prev_bnum

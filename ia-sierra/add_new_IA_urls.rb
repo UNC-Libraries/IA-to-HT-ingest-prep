@@ -23,10 +23,6 @@ distinguish_if_needs_oca = true
 # global update duplicate oca item recs unless distinguish_if_needs_oca
 
 
-
-$c.close if $c
-$c = Connect.new
-
 ifile = IARecord.import_search_csv('search.csv')
 ifile.sort_by! { |r| r[:unc_bib_record_id] }
 

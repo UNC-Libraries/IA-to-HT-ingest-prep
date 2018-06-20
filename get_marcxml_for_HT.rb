@@ -2,10 +2,6 @@
 require 'csv'
 require_relative 'HathiRecord'
 
-$c.close if $c
-$c = Connect.new
-
-
 # input = IA search.csv results for prospective HT-ingest
 #   essential fields: bnum, id, ark, vol
 #   standard addl fields: publicdate, sponsor, contributor, collection
