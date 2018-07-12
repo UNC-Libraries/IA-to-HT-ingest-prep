@@ -1,8 +1,8 @@
-require_relative 'SierraArchiveURL.rb'
-require_relative '../IASierraBib.rb'
-require_relative '../IASierra856.rb'
-require_relative '../IARecord.rb'
-require_relative '../../sierra-postgres-utilities/lib/sierra_postgres_utilities.rb'
+require_relative 'SierraArchiveURL'
+require_relative '../IASierraBib'
+require_relative '../IASierra856'
+require_relative '../IARecord'
+require_relative '../../sierra-postgres-utilities/lib/sierra_postgres_utilities'
 
 
 query = <<-SQL
@@ -73,7 +73,7 @@ SierraDB.results.entries.each do |m856|
   #   for detail urls, based on ia id
   #   for query urls, grab one IA rec with same unc_bib_record_id
   my_ia =
-    if url.ia_id 
+    if url.ia_id
       ia_by_ident[url.ia_id]
     elsif url.url_bib_record_id
       ia_by_bibrecid[url.url_bib_record_id].to_a[0]
@@ -92,7 +92,7 @@ SierraDB.results.entries.each do |m856|
   ofile << [
     bnum,
     url.notes.join(';;;'),
-    url.bib.bib_locs,
+    url.bib.bib_locs.join(', '),
     url.bib.bcode1_blvl,
     url.bib.mat_type,
     url.ia_id.to_s,
@@ -131,7 +131,7 @@ our oca things seem to be things:
   is_orig_print_rec == yes
   or has oca statsed item record
   if neither of those, it if mat_type z/s/w check and add oca statsed item if ours?
-  
+
 =end
 
 #  even if sierra rec contains duplicate urls, don't output duplicate good urls

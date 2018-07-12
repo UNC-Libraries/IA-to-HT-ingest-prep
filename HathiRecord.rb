@@ -1,5 +1,5 @@
 require_relative './IARecord'
-require_relative '../sierra-postgres-utilities/lib/sierra_postgres_utilities.rb'
+require_relative '../sierra-postgres-utilities/lib/sierra_postgres_utilities'
 
 
 class HathiRecord < DerivativeRecord
@@ -9,7 +9,7 @@ class HathiRecord < DerivativeRecord
     super(sierra_bib)
     @ia = ia_record
     unless @ia.id && @ia.ark
-      self.warn('No Ark could be found for this record. Report record to LDSS.')
+      warn('No Ark could be found for this record. Report record to LDSS.')
     end
   end
 
@@ -26,16 +26,16 @@ class HathiRecord < DerivativeRecord
 
     # check leader
     if @smarc.no_leader?
-      warn('This bib record has no Leader. A Leader field is required. Report to cataloging staff to add Leader to record.')      
+      warn('This bib record has no Leader. A Leader field is required. Report to cataloging staff to add Leader to record.')
     end
     if @smarc.bad_leader_length?
       warn('Leader is longer or shorter than 24 characters. Report to cataloging staff to fix record.')
     end
-    if @smarc.ldr06_undefined?
-      warn('LDR/06 (rec_type) is an undefined value. Report to cataloging staff to fix record.')
+    if @smarc.ldr06_invalid?
+      warn('Invalid LDR/06 (rec_type). It is an undefined value or not present. Report to cataloging staff to fix record.')
     end
-    if @smarc.ldr07_undefined?
-      warn('LDR/07 (blvl) is an undefined value. Report to cataloging staff to fix record.')
+    if @smarc.ldr07_invalid?
+      warn('Invalid LDR/07 (blvl). It is an undefined value or not present. Report to cataloging staff to fix record.')
     end
     #todo: if @marc.multiple_leader?
     if @sierra.multiple_LDRs_flag
@@ -61,7 +61,7 @@ class HathiRecord < DerivativeRecord
     end
     if @smarc.count('008') >= 2
       warn('This bib has more than one 008 field, which is a non-repeatable field. Report to cataloging staff to fix 008 field.')
-    end    
+    end
     if @smarc.bad_008_length?
         warn("This bib's 008 field is not 40 characters long, which it should be. Report to cataloging staff to fix 008 field.")
     end
@@ -92,10 +92,10 @@ class HathiRecord < DerivativeRecord
     # check oclc 035s
     # this needs to be @altmarc rather than @smarc b/c @smarc does not contain
     # 035s we've written from an 001
-    if self.altmarc.oclc_035_count == 0
+    if altmarc.oclc_035_count == 0
       warn('This bib does not contain an 035 field with an OCLC number and does not have an OCLC number in the 001. An OCLC number is required for Hathitrust. Report to cataloging staff.')
     end
-    if self.altmarc.oclc_035_count >= 2
+    if altmarc.oclc_035_count >= 2
       warn('This bib contains multiple 035 fields with OCLC numbers or contains an 035 and an 001 with distinct OCLC numbers. Report to cataloging staff to fix.')
     end
   end
