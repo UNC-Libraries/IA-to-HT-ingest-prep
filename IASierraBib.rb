@@ -1,20 +1,18 @@
 require_relative './IARecord'
 require_relative './IASierra856'
-require_relative '../sierra_postgres_utilities/SierraBib'
+require_relative '../sierra-postgres-utilities/lib/sierra_postgres_utilities.rb'
 
 class SierraBib
   attr_reader :ia
 
   def ia_ids_in_856u
-    return nil if !self.archive_856s
-    archive_856u_s = self.archive_856s.map { |v| subfield_from_field_content('u', v['field_content'])}
-    m856_ia_ids = archive_856u_s.map { |sfu|
-      m = sfu.match(/details\/(.*)/)
-      m ? m[1].strip : nil
-    }
-    m856_ia_ids.compact!
-    return nil if m856_ia_ids.empty?
-    return m856_ia_ids
+    return nil unless archive_856s
+    m856u = marc.field_find_all(tag: '856', complex_subfields: [
+      [:has_as_first, code: 'u', value: /details\//]
+    ]).map { |f| f['u'] }
+    ids = m856u.map { |sf| sf.match(/details\/(.*)/)[1].strip }
+    return nil if ids.empty?
+    ids
   end
 
   # array of ia_ids with this bnum
@@ -23,15 +21,19 @@ class SierraBib
     return @ia.map { |ia| ia.id }
   end
 
+  # test
   def m856s_needed
-    if self.serial? && !self.has_query_url?
+    if serial? && !has_query_url?
       ia = @ia[0]
-      return [IASierra856.new(self, ia).proper_856]
-    elsif self.mono?
-      needed = self.ia.reject { |ia| self.ia_ids_in_856u.to_a.include?(ia.id)}
+      needed = [IASierra856.new(self, ia)]
+    elsif mono?
+      needed = @ia.reject { |ia| ia_ids_in_856u.to_a.include?(ia.id)}
       return nil if needed.empty?
-      return needed.map { |ia| IASierra856.new(self, ia).proper_856 }
+      needed.map! { |ia| IASierra856.new(self, ia) }
     end
+    return nil unless needed
+    needed.sort_by! { |m856| m856.sortable_sf3 }
+    needed.map { |m856| m856.proper_856 }
   end
 
   def ia=(array_of_IA_objects)
@@ -39,100 +41,94 @@ class SierraBib
   end
 
   def rec_type
-    if ['s', 'b'].include?(self.bcode1_blvl)
+    if ['s', 'b'].include?(bcode1_blvl)
       return 'serial'
-    elsif ['a', 'c', 'm'].include?(self.bcode1_blvl)
+    elsif ['a', 'c', 'm'].include?(bcode1_blvl)
       return 'mono'
     end
   end
 
   def serial?
-    true if self.rec_type == 'serial'
+    true if rec_type == 'serial'
   end
 
   def mono?
-    true if self.rec_type == 'mono'
+    true if rec_type == 'mono'
   end
 
   def relevant_nonIA_856s
     # non-IA 856s with indicators 0 or 1 (link is to resource
     # or version of resource, not something like Table of Contents)
-    my856s = self.m856s
-    return nil if !my856s
-    my856s.select! { |v| v['field_content'] !~ /archive.org/ &&
-                          %w(0 1).include?(v['marc_ind2'])
-    }
-    return nil if my856s.empty?
-    my856s
+    relevant_856s = marc.field_find_all(tag: '856', ind2: /0|1/,
+                                         value_not: /archive.org/ )
+    return nil if relevant_856s.empty?
+    relevant_856s
   end
 
   def archive_856s
-    my856s = self.m856s
-    return nil if !my856s
-    archive_856s = my856s.select { |v| v['field_content'] =~ /archive.org/ }
-    return nil if !archive_856s
-    return archive_856s
+    archive_856s = marc.field_find_all(tag: '856', value: /archive.org/ )
+    return nil if archive_856s.empty?
+    archive_856s
   end
 
   def has_query_url?
-    return false if !self.archive_856s
-    archive_856u_s = self.archive_856s.map { |v| subfield_from_field_content('u', v['field_content'])}
-    archive_856u_s.each do |m856u|
-      return true if m856u.match(/unc_bib_record_id.*#{self.bnum_trunc}/)
-    end
-    return false
+    return false unless archive_856s
+    marc.any_fields?(tag: '856', complex_subfields: [
+      [:has, code: 'u', value:  /unc_bib_record_id.*#{bnum_trunc}/]
+    ])
   end
 
   def has_OA_530?
-    m530s = self.get_varfields('530') || []
     oca530 = '|aAlso available via the World Wide Web.'
-    return true unless m530s.select { |v| v['field_content'] == oca530 }.empty?
+    marc.fields('530').select { |f| f.field_content == oca530 }.any?
   end
 
-  def oca_ebnb_item_count
-    query = <<~SQL
-      select *
-      from sierra_view.bib_record_item_record_link bil
-      inner join sierra_view.varfield v on v.record_id = bil.item_record_id
-      where bil.bib_record_id = #{@record_id} and v.varfield_type_code = 'j' and
-      (v.field_content ilike '%OCA electronic book%' or v.field_content ilike '%OCA electronic journal%')
-    SQL
-    $c.make_query(query)
-    return $c.results.values.length
+  def oca_items
+    oca_items = items&.select { |i| i.is_oca? }
+    return nil if oca_items.empty?
+    oca_items
   end
 
-  def has_oca_ebnb_item?
-    return self.oca_ebnb_item_count > 0
-  end
-
+  # returns a derived 949 for OCA item creation as a MARC::DataField
   def proper_949
-    if self.serial?
+    if serial?
       item_loc = 'erri'
       stats_rec_type = 'journal'
-    elsif self.mono?
+    elsif mono?
       item_loc = 'ebnb'
       stats_rec_type = 'book'
     end
-    # "\\1" makes the indicators \1
-    return "=949  \\1$g1$l#{item_loc}$h0$rn$t11$u-$jOCA electronic #{stats_rec_type}"
+    m949 = MARC::DataField.new('949', ' ', '1',
+      ['g', '1'],
+      ['l', item_loc],
+      ['h', '0'],
+      ['r', 'n'],
+      ['t', '11'],
+      ['u', '-'],
+      ['j', "OCA electronic #{stats_rec_type}"]
+    )
   end
 
+  # returns the standard 530 for OCA bibs as a MARC::DataField
   def proper_530
-    # "\\\\" makes the indicators \\
-    return "=530  \\\\$aAlso available via the World Wide Web."
+    field_content = "Also available via the World Wide Web."
+    m530 = MARC::DataField.new('530', ' ', ' ', ['a', field_content])
   end
 
+  # todo; or discard
   def has_IA_recs_with_dupe_vol?
     return nil if !@ia
   end
 
+  # todo; or discard
   def ia_recs_needing_vol_disambiguation?
     return nil if !@ia
   end
 
-  def ia__recs_lacking_caption
+
+  def ia_recs_lacking_caption
     return nil if !@ia
-    return @ia.select { |ia| ia.lacks_caption? }
+    @ia.select { |ia| ia.lacks_caption? }
   end
 
   def ia_count_by_vol

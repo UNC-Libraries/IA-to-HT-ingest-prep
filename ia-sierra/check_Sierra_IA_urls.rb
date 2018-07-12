@@ -1,8 +1,8 @@
-require_relative 'SierraArchiveURL.rb'
-require_relative '../IASierraBib.rb'
-require_relative '../IASierra856.rb'
-require_relative '../IARecord.rb'
-require_relative '../../sierra_postgres_utilities/SierraBib.rb'
+require_relative 'SierraArchiveURL'
+require_relative '../IASierraBib'
+require_relative '../IASierra856'
+require_relative '../IARecord'
+require_relative '../../sierra-postgres-utilities/lib/sierra_postgres_utilities'
 
 
 query = <<-SQL
@@ -17,19 +17,17 @@ left join sierra_view.subfield sf_u on sf_u.varfield_id = v.id
 left join sierra_view.subfield sf_3 on sf_3.varfield_id = v.id
   and sf_3.tag = '3'
 left join sierra_view.subfield sf_x on sf_x.varfield_id = v.id
-  and sf_x.tag = 'x'
+  and sf_x.tag = 'x' and sf_x.content !~* 'ocalink_jcm'
 left join sierra_view.subfield sf_y on sf_y.varfield_id = v.id
   and sf_y.tag = 'y'
 where v.marc_tag = '856'
-and v.field_content ~* 'archive.org'
+and v.field_content ~* '\\|xocalink_jcm'
+--and v.field_content ~* 'archive\.org'
 --and v.field_content !~* 'url_tagged_for_replacement_'
 order by bnum
 SQL
 
-$c.close if $c
-$c = Connect.new()
-
-$c.make_query(query)
+SierraDB.make_query(query)
 
 
 ifile = IARecord.import_search_csv('search.csv')
@@ -56,7 +54,7 @@ ofile << %w( bnum notes bib_locs blvl mat_type ia_id sfu sf3 sfx sfy short_bnum 
              is_orig_print_rec proper_url_count oca_stats_count have_jurisdiction proper_sf3 proper_sfu proper_856_content perfect_856 fake_leader proper_907 proper_856 all_proper_856s)
 prev_bnum = 'unlikely_initial_string'
 prev_bib = nil
-$c.results.entries.each do |m856|
+SierraDB.results.entries.each do |m856|
   # intialize new SierraBib or re-use previous
   temp_bnum = m856['bnum']
   if temp_bnum == prev_bnum
@@ -68,14 +66,14 @@ $c.results.entries.each do |m856|
   end
   url = SierraArchiveURL.new(m856, bib: bib)
   if url.has_no_archive_856u?
-    ofile << [url.bnum, url.notes.join(';;;')]
+    ofile << [url.bnum, url.notes.join(';;;'), '', '', url.ia_id.to_s, url.sfu, url.sf3, url.sfx, url.sfy, '', url.url_bib_record_id.to_s]
     next
   end
   # identify URL's IA record
   #   for detail urls, based on ia id
   #   for query urls, grab one IA rec with same unc_bib_record_id
   my_ia =
-    if url.ia_id 
+    if url.ia_id
       ia_by_ident[url.ia_id]
     elsif url.url_bib_record_id
       ia_by_bibrecid[url.url_bib_record_id].to_a[0]
@@ -84,7 +82,7 @@ $c.results.entries.each do |m856|
     url.ia=(my_ia)
   else
     url.notes << 'ia_id or bib_record_id not found in IA'
-    ofile << [url.bnum, url.notes.join(';;;')]
+    ofile << [url.bnum, url.notes.join(';;;'), '', '', url.ia_id.to_s, url.sfu, url.sf3, url.sfx, url.sfy, '', url.url_bib_record_id.to_s]
     next
   end
   puts temp_bnum
@@ -94,7 +92,7 @@ $c.results.entries.each do |m856|
   ofile << [
     bnum,
     url.notes.join(';;;'),
-    url.bib.bib_locs,
+    url.bib.bib_locs.join(', '),
     url.bib.bcode1_blvl,
     url.bib.mat_type,
     url.ia_id.to_s,
@@ -110,6 +108,7 @@ $c.results.entries.each do |m856|
     url.have_jurisdiction?.to_s,
     url.proper.proper_sf3.to_s,
     url.proper.proper_sfu.to_s,
+    # fix for removal of proper_856_content
     url.proper.proper_856_content.to_s,
     url.sierra_856_perfect?.to_s,
     url.bib.fake_leader,
@@ -132,7 +131,7 @@ our oca things seem to be things:
   is_orig_print_rec == yes
   or has oca statsed item record
   if neither of those, it if mat_type z/s/w check and add oca statsed item if ours?
-  
+
 =end
 
 #  even if sierra rec contains duplicate urls, don't output duplicate good urls

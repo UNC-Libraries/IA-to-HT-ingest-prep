@@ -48,7 +48,7 @@ RSpec.describe HathiRecord do
       srec = SierraBib.new('b6780003')
       irec = IARecord.new({:identifier => 'otterbeinhymnalf00chur', :'identifier-ark' => 'ark:/13960/t05x3dc2n'})
       rec = HathiRecord.new(srec, irec)
-      expect(rec.warnings).to include('Sierra bib for this bnum was deleted')
+      expect(rec.warnings).to_not include('No record was found in Sierra for this bnum')
     end
 
     it 'writes warning re: deleted Sierra records when bib deleted' do
@@ -57,13 +57,13 @@ RSpec.describe HathiRecord do
       rec = HathiRecord.new(srec, irec)
       expect(rec.warnings).to include('Sierra bib for this bnum was deleted')
     end
-    
+
   end
 
   #hathimarc
   #oclcnumber
   #my035s
   describe 'check_marc' do
-    
+
   end
 end
