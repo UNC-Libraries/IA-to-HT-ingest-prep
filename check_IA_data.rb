@@ -51,8 +51,8 @@ bnums.entries.each do |temp_bnum, ia_recs|
   ia_recs.each do |ia|
     #puts ia.id
     notes = []
-    notes << 'bib deleted' if bib.deleted
-    notes << 'bib suppressed' if bib.suppressed
+    notes << 'bib deleted' if bib.deleted?
+    notes << 'bib suppressed' if bib.suppressed?
     link_in_sierra =
       if bib.serial?
         bib.has_query_url?
@@ -76,8 +76,8 @@ bnums.entries.each do |temp_bnum, ia_recs|
       end
     end
     # if ia has no vol info but bib is mvmono or serial
-    if !ia.volume && ( bib.ia.length > 1 || (!bib.deleted && bib.serial?))
-      notes << 'DISAMBIGUATE:this IA item serial/mvmono needs volume'
+    if !ia.volume && ( bib.ia.length > 1 || (!bib.deleted? && bib.serial?))
+      notes << 'DISAMBIGUATE:this IA item needs volume'
       needs_fix = true
     # if bib.has multiple recs and >0 recs lack volume data
     elsif ia_count_by_vol[nil] && (ia_count_by_vol[nil] > 1 || ia_count_by_vol.length > 1)

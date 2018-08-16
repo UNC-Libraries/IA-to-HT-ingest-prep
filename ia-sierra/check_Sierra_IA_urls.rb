@@ -21,7 +21,7 @@ left join sierra_view.subfield sf_x on sf_x.varfield_id = v.id
 left join sierra_view.subfield sf_y on sf_y.varfield_id = v.id
   and sf_y.tag = 'y'
 where v.marc_tag = '856'
-and v.field_content ~* '\\|xocalink_jcm'
+and v.field_content ~* '\\|xocalink_j.m'
 --and v.field_content ~* 'archive\.org'
 --and v.field_content !~* 'url_tagged_for_replacement_'
 order by bnum

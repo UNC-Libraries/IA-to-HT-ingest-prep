@@ -1,4 +1,4 @@
-
+require 'date'
 require 'csv'
 require_relative 'HathiRecord'
 
@@ -36,18 +36,26 @@ $ia_logfile << ['reason', headers].flatten
 
 
 def ia_log(reason, ia_record)
-  $ia_logfile << [reason, ia_record.to_a].flatten
+  $ia_logfile << [reason, ia_record.values].flatten
 end
 
 
 problem_id_exclusion = 0
-File.open('hathi_marc.xml',"w:UTF-8") do |xml_out|
+
+ofilename = [
+  'unc',
+  'ia-unc',
+  Date.today.strftime('%Y%m%d'),
+  'ia'
+].join('_') + ".xml"
+
+written_count = 0
+File.open(ofilename,"w:UTF-8") do |xml_out|
   xml_out << MARC::XML_HEADER
   prev_bnum = nil
   prev_bib = nil
   ifile.each do |ia_record|
     ia = IARecord.new(ia_record)
-    p ia
     bnum = ia.bib_record_id
     if exclude_bibs.include?(bnum)
       ia_log('bib blacklisted', ia_record)
@@ -79,6 +87,7 @@ File.open('hathi_marc.xml',"w:UTF-8") do |xml_out|
         err_log << "#{hathi.bnum}\t#{warning}\n"
       end
     else
+      written_count += 1
       ia_log('wrote xml', ia_record)
     end
 
@@ -87,6 +96,14 @@ File.open('hathi_marc.xml',"w:UTF-8") do |xml_out|
   end
   xml_out << MARC::XML_FOOTER
 end
+
+File.open('zephir_email.txt', 'w') do |ofile|
+  ofile << "file name=#{ofilename}\n"
+  ofile << "file size=#{File.size(ofilename)}\n"
+  ofile << "record count=#{written_count}\n"
+  ofile << "notification email=eres_cat@unc.edu\n"
+end
+
 err_log.close
 $ia_logfile.close
 
