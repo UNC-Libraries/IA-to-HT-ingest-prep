@@ -6,16 +6,9 @@ Work in progress
 
 Installation
 ============
-This is dependent on this postgres_connect repo BUT see note below:
-* https://github.com/ldss-jm/postgres_connect
-
-NOTE: While postgres_connect is being reworked to add Sierra bib record knowledge/functionality, this repo is dependent on this specific branch of postgres_connect:
-* https://github.com/ldss-jm/postgres_connect/tree/sierra-postgres-utilities
-
-- Install this repo in some working directory
-- Also install the branch of postgres_connect
-  - install that into "sierra_postgres_utilities"
-  - "sierra_postgres_utilities" and the working directory (i.e. this hathi ingest repo) need to have the same parent directory
+- Clone this repo in some working directory
+- Clone the sierra-postgres-utilities repo into the same parent directory as this repo
+  - https://github.com/UNC-Libraries/sierra-postgres-utilities
 
 IA-to-HT ingest
 ===============
@@ -67,7 +60,7 @@ Output:
   - check_IA_data_for_problems.csv
     - contains all IA records, not just those with problems. Problems are
       listed in the notes column.
-    
+
       It's worth sorting and checking over the non-problematic ia.volume
       data. If further rules for detecting volume data that needs captions,
       they can be added to IARecord.rb. Those, or any other volume/other
@@ -125,8 +118,9 @@ https://archive.org/advancedsearch.php?q=scanningcenter%3A(chapelhill)+AND+unc_b
 
 #### nc01.arks.txt -- mid-2017 file included for convenience
 is a list of ark ids for all unc-contributed items in HathiTrust as of mid-2017 (which remains current as of Jan 1 2018). It should be updated (i.e. kept current) if you want automated detection of whether a UNC record already exists in HT for an IA item.
-
-
+'''
+awk -F'\t' '($1 ~ /^nc01\./) { gsub(/^nc01\./, "", $1); print $1 }' hathi_full_20180701.txt > nc01.arks.txt
+'''
 
 
 

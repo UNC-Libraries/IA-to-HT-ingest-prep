@@ -28,7 +28,7 @@ ifile.sort_by! { |r| r[:unc_bib_record_id] }
 
 # input = ia_ids with IA-metadata issues to be excluded from HT-ingest (until fixed)
 problem_ids = []
-problem_ids = CSV.read('../problems.csv', headers: true)
+problem_ids = CSV.read('problems.csv', headers: true)
 problem_ids = problem_ids.to_a[1..-1].map { |r| r[0] }
 ifile.reject! { |r| problem_ids.include?(r[:identifier])}
 
@@ -56,7 +56,7 @@ end
 bnums.entries.each do |bnum, ia_recs|
   bib = SierraBib.new(bnum)
   bib.ia=(ia_recs)
-  puts "del or not  #{bib.given_bnum}" if bib.deleted || bib.record_id == nil
+  puts "del or not  #{bib.given_bnum}" if bib.deleted? || bib.record_id.nil?
   puts "suppressed  #{bib.given_bnum}" if bib.suppressed?
   #todo: any logging of deleted/suppressed bibs
   next if bib.deleted || bib.record_id == nil || bib.suppressed?
@@ -64,7 +64,7 @@ bnums.entries.each do |bnum, ia_recs|
   m856s_needed = bib.m856s_needed
   next unless m856s_needed
 
-  bib.stub << bib.proper_530 unless bib.has_OA_530?
+  bib.stub << bib.proper_530 if bib.lacking_oca_530?
   m856s_needed.each { |m856| bib.stub << m856 }
   if distinguish_if_needs_oca
     bib.stub << bib.proper_949 unless bib.oca_items

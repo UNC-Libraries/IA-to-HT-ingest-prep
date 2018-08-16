@@ -78,9 +78,17 @@ class SierraBib
     ])
   end
 
+  # deprecate in favor of lacking_oca_530?
   def has_OA_530?
     oca530 = '|aAlso available via the World Wide Web.'
     marc.fields('530').select { |f| f.field_content == oca530 }.any?
+  end
+
+  # True when bib has no OCA 530 and needs one (i.e. not an e-record).
+  def lacking_oca_530?
+    return false if %w(z s w m).include?(mat_type)
+    oca530 = '|aAlso available via the World Wide Web.'
+    marc.fields('530').select { |f| f.field_content == oca530 }.empty?
   end
 
   def oca_items
@@ -110,7 +118,9 @@ class SierraBib
   end
 
   # returns the standard 530 for OCA bibs as a MARC::DataField
+  # nil for e-records (which don't need a 530)
   def proper_530
+    return nil if %w(z s w m).include?(mat_type)
     field_content = "Also available via the World Wide Web."
     m530 = MARC::DataField.new('530', ' ', ' ', ['a', field_content])
   end
