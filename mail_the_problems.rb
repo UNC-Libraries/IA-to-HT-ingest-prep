@@ -8,7 +8,7 @@ Hi {branchname},
 Attached is a list of IA items with metadata problems for collections you manage.
 
 For more info, please see:
-https://adminliveunc.sharepoint.com/sites/lib/kb/SiteAssets/LibWiki/SCRIBE%20Book%20Digitization/IA_metadata_corrections.docx
+https://internal.lib.unc.edu/wikis/staff/index.php/Branch_corrections_of_IA_metadata
 
 Please:
   1) add corrections to the empty "volume" field of the attached list,

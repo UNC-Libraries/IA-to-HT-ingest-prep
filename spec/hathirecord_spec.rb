@@ -66,4 +66,18 @@ RSpec.describe HathiRecord do
   describe 'check_marc' do
 
   end
+
+  describe '#xml' do
+    let(:srec) { SierraBib.new('b1841152a') }
+    let(:irec) { IARecord.new({:identifier => 'otterbeinhymnalf00chur',
+                               :'identifier-ark' => 'ark:/13960/t05x3dc2n',
+                               :volume => 'v.2'}) }
+    let(:rec) { HathiRecord.new(srec, irec) }
+    let(:expected) { File.open('spec/data/b1841152a.ht.xml').read }
+
+    # nothing special about b1841152a
+    it 'produces expected xml for b1841152a' do
+      expect(rec.xml).to eq(expected)
+    end
+  end
 end

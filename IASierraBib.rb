@@ -40,7 +40,7 @@ class SierraBib
     @ia = array_of_IA_objects
   end
 
-  def rec_type
+  def ia_rec_type
     if ['s', 'b'].include?(bcode1_blvl)
       return 'serial'
     elsif ['a', 'c', 'm'].include?(bcode1_blvl)
@@ -49,11 +49,11 @@ class SierraBib
   end
 
   def serial?
-    true if rec_type == 'serial'
+    true if ia_rec_type == 'serial'
   end
 
   def mono?
-    true if rec_type == 'mono'
+    true if ia_rec_type == 'mono'
   end
 
   def relevant_nonIA_856s

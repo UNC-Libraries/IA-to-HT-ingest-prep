@@ -1,4 +1,3 @@
-require 'date'
 require 'csv'
 require_relative 'HathiRecord'
 
@@ -31,7 +30,7 @@ exclude_bibs.select! { |x| x =~ /^b[0-9]+$/ }
 # this logs details of bib/marc errors
 err_log = File.open('bib_errors.txt', 'w')
 # this logs general disposition of everything
-$ia_logfile = CSV.open('ia_log.csv', 'w')
+$ia_logfile = CSV.open(Time.now.strftime('%Y%m%d') + '_ia_log.csv', 'w')
 $ia_logfile << ['reason', headers].flatten
 
 
@@ -45,7 +44,7 @@ problem_id_exclusion = 0
 ofilename = [
   'unc',
   'ia-unc',
-  Date.today.strftime('%Y%m%d'),
+  Time.now.strftime('%Y%m%d'),
   'ia'
 ].join('_') + ".xml"
 
