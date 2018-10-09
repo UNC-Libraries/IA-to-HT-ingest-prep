@@ -37,10 +37,11 @@ class HathiRecord < DerivativeRecord
     if @smarc.ldr07_invalid?
       warn('Invalid LDR/07 (blvl). It is an undefined value or not present. Report to cataloging staff to fix record.')
     end
-    #todo: if @marc.multiple_leader?
-    if @sierra.multiple_LDRs_flag
-      warn('This bib record has multiple Leader fields, which should not be. Report to cataloging staff to fix record.')
-    end
+
+    # Dropped multiple leader check Oct 2018. No existing records had multiple
+    # leader fields, and it may not be possible in Sierra. Were a record
+    # to have multiple leader fields, the first one would be included in
+    # the marc we give Hathi.
 
     # check 001
     if @smarc.count('001') == 0

@@ -101,10 +101,15 @@ class IARecord
     # 187-
     # 18--
     return false if @volume == nil
-    volume = @volume[0] == '(' ? @volume[1..-1] : @volume
+    volume =
+      if ['(', '['].include?(@volume[0])
+        @volume[1..-1]
+      else
+        @volume
+      end
     return false if volume =~ /^[[:alpha:]]/
     return false if volume =~ /^[0-9]{4}([^0-9].*)?$/
-    return false if volume =~ /^[0-9]{2}[0-9-]-&/
+    return false if volume =~ /^[0-9]{2}[0-9-]-([^0-9].*)?$/
     return false if volume =~ /^[0-9]+(st|nd|rd|th|d|er|re|e|eme|de)/
     return false if volume =~ /^#/ if octothorp_allowed
     true

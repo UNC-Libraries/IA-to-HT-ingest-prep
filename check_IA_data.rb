@@ -69,7 +69,7 @@ bnums.entries.each do |temp_bnum, ia_recs|
         # mono captions affect HT/IA and Sierra links
         # if a serial is already in HT, lacks caption is not so big a problem,
         # but monos already in HT still need captions for proper Sierra links.
-        notes << "CAPTION:this IA #{bib.rec_type} lacks caption"
+        notes << "CAPTION:this IA #{bib.ia_rec_type} lacks caption"
         needs_fix = true
       else
         notes << 'other IA item on bib lacks caption'
