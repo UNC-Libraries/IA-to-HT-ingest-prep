@@ -11,7 +11,7 @@ For more info, please see:
 https://internal.lib.unc.edu/wikis/staff/index.php/Branch_corrections_of_IA_metadata
 
 Please:
-  1) add corrections to the empty "volume" field of the attached list,
+  1) add corrections to the attached list per the wiki instructions,
   2) send corrected items in an attached .csv or .xlsx file
       to: eres_cat@unc.edu
       subject line: "IA/Scribe metadata corrections to load"

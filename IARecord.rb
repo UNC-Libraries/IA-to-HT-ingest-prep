@@ -87,8 +87,9 @@ class IARecord
     # don't rely on 0 false positives; add further rules below as needed
     #
     # return true when volume numeration is present and lacks a beginning
-    # caption. Years and ordinal numbers are permitted. A leading open
-    # parenthesis is ignored.
+    # caption. Years and ordinal numbers are permitted. Leading punctuation,
+    # whitespace, etc is ignored (except for "#" which is considered a valid
+    # caption).
     #   each returns false: ['', 'v.3', '1999', '1st thing', '#3']
     #   returns true: '2'
     # permitted date forms:
@@ -100,13 +101,9 @@ class IARecord
     # 1867-68
     # 187-
     # 18--
-    return false if @volume == nil
-    volume =
-      if ['(', '['].include?(@volume[0])
-        @volume[1..-1]
-      else
-        @volume
-      end
+    return false if @volume.nil?
+    # remove anything preceeding first "#", letter, number
+    volume = @volume.gsub(/^[^[:alnum:]#]/, '')
     return false if volume =~ /^[[:alpha:]]/
     return false if volume =~ /^[0-9]{4}([^0-9].*)?$/
     return false if volume =~ /^[0-9]{2}[0-9-]-([^0-9].*)?$/

@@ -38,7 +38,7 @@ RSpec.describe IARecord do
     end
     it 'sets warning re missing ark' do
       expect(irec3.warnings).to include('No IA ark')
-    end    
+    end
 
     ihash4 = {:unc_bib_record_id=>"", :identifier=>"elclavoardiendod550valc", :"identifier-ark"=>"ark:/13960/t9962ss6m", :volume=>"v. 550, no. 2", :publicdate=>"2015-02-02T18:38:50Z", :sponsor=>"University of North Carolina at Chapel Hill", :contributor=>"University Library, University of North Carolina at Chapel Hill", :collection=>"spandr,unclibraries,americana"}
     irec4 = IARecord.new(ihash4)
@@ -47,7 +47,7 @@ RSpec.describe IARecord do
     end
     it 'sets warning re missing bib_record_id' do
       expect(irec4.warnings).to include('No bib_record_id in IA')
-    end        
+    end
 
     ihash5 = {:unc_bib_record_id=>"b2095036", :identifier=>"elclavoardiendod550valc", :"identifier-ark"=>"ark:/13960/t9962ss6m", :volume=>"", :publicdate=>"2015-02-02T18:38:50Z", :sponsor=>"University of North Carolina at Chapel Hill", :contributor=>"University Library, University of North Carolina at Chapel Hill", :collection=>"spandr,unclibraries,americana"}
     irec5 = IARecord.new(ihash5)
@@ -59,9 +59,9 @@ RSpec.describe IARecord do
   describe 'import_search_csv' do
     #todo
   end
-  
+
   describe 'lacks_caption' do
-    it 'returns true when volume = 2' do 
+    it 'returns true when volume = 2' do
       irec = IARecord.new({:unc_bib_record_id=>"b2095036",
                            :identifier=>"elclavoardiendod550valc",
                            :"identifier-ark"=>"ark:/13960/t9962ss6m",
@@ -69,7 +69,7 @@ RSpec.describe IARecord do
       expect(irec.lacks_caption?).to eq(true)
     end
 
-    it 'returns false when volume is blank' do 
+    it 'returns false when volume is blank' do
       irec = IARecord.new({:unc_bib_record_id=>"b2095036",
                            :identifier=>"elclavoardiendod550valc",
                            :"identifier-ark"=>"ark:/13960/t9962ss6m",
@@ -77,7 +77,7 @@ RSpec.describe IARecord do
       expect(irec.lacks_caption?).to eq(false)
     end
 
-    it 'returns false when volume is bd. 18' do 
+    it 'returns false when volume is bd. 18' do
       irec = IARecord.new({:unc_bib_record_id=>"b2095036",
                            :identifier=>"elclavoardiendod550valc",
                            :"identifier-ark"=>"ark:/13960/t9962ss6m",
@@ -85,7 +85,16 @@ RSpec.describe IARecord do
       expect(irec.lacks_caption?).to eq(false)
     end
 
-    it 'returns false when volume is date' do 
+    it 'returns false when volume is "︠I︡Ubileĭnyĭ"' do
+      # this was maybe being parsed as beginning with a roman numeral
+      irec = IARecord.new({:unc_bib_record_id=>"b2095036",
+                           :identifier=>"elclavoardiendod550valc",
+                           :"identifier-ark"=>"ark:/13960/t9962ss6m",
+                           :volume=>"︠I︡Ubileĭnyĭ"})
+      expect(irec.lacks_caption?).to eq(false)
+    end
+
+    it 'returns false when volume is date' do
       irec = IARecord.new({:unc_bib_record_id=>"b2095036",
                            :identifier=>"elclavoardiendod550valc",
                            :"identifier-ark"=>"ark:/13960/t9962ss6m",
@@ -93,7 +102,7 @@ RSpec.describe IARecord do
       expect(irec.lacks_caption?).to eq(false)
     end
 
-    it 'returns false when volume is ordinal' do 
+    it 'returns false when volume is ordinal' do
       irec = IARecord.new({:unc_bib_record_id=>"b2095036",
                            :identifier=>"elclavoardiendod550valc",
                            :"identifier-ark"=>"ark:/13960/t9962ss6m",
@@ -101,7 +110,7 @@ RSpec.describe IARecord do
       expect(irec.lacks_caption?).to eq(false)
     end
 
-    it 'returns false when volume begins with octothorp' do 
+    it 'returns false when volume begins with octothorp' do
       irec = IARecord.new({:unc_bib_record_id=>"b2095036",
                            :identifier=>"elclavoardiendod550valc",
                            :"identifier-ark"=>"ark:/13960/t9962ss6m",
@@ -109,7 +118,7 @@ RSpec.describe IARecord do
       expect(irec.lacks_caption?).to eq(false)
     end
 
-    it 'returns true when volume begins with octothorp if octothorp disallowed' do 
+    it 'returns true when volume begins with octothorp if octothorp disallowed' do
       irec = IARecord.new({:unc_bib_record_id=>"b2095036",
                            :identifier=>"elclavoardiendod550valc",
                            :"identifier-ark"=>"ark:/13960/t9962ss6m",
@@ -117,7 +126,7 @@ RSpec.describe IARecord do
       expect(irec.lacks_caption?(octothorp_allowed: false)).to eq(true)
     end
 
-    it 'returns false when an open parenthesis precedes caption' do 
+    it 'returns false when an open parenthesis precedes caption' do
       irec = IARecord.new({:unc_bib_record_id=>"b2095036",
                            :identifier=>"elclavoardiendod550valc",
                            :"identifier-ark"=>"ark:/13960/t9962ss6m",

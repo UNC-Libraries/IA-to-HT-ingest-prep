@@ -51,42 +51,48 @@ bnums.entries.each do |temp_bnum, ia_recs|
   ia_recs.each do |ia|
     #puts ia.id
     notes = []
-    notes << 'bib deleted' if bib.deleted?
-    notes << 'bib suppressed' if bib.suppressed?
-    link_in_sierra =
-      if bib.serial?
-        bib.has_query_url?
-      elsif bib.mono?
-        bib.ia_ids_in_856u.to_a.include?(ia.id)
+    if bib.invalid?
+      notes << 'invalid bib_record_id'
+      link_in_sierra = false
+      needs_fix = true
+    else
+      notes << 'bib deleted' if bib.deleted?
+      notes << 'bib suppressed' if bib.suppressed?
+      link_in_sierra =
+        if bib.serial?
+          bib.has_query_url?
+        elsif bib.mono?
+          bib.ia_ids_in_856u.to_a.include?(ia.id)
+        end
+      unless bib.ia.select { |ia| ia.lacks_caption? }.empty?
+        # if bib has any ia with vol info that lacks caption
+        # may as well warn about any on bib, such that with "v.2" and "2"
+        # we'll reject both and process as dupes, rather than permit the "v.2"
+        # and later find the "2" is a dupe
+        if ia.lacks_caption?
+          # serial captions only affect HT/IA not Sierra links
+          # mono captions affect HT/IA and Sierra links
+          # if a serial is already in HT, lacks caption is not so big a problem,
+          # but monos already in HT still need captions for proper Sierra links.
+          notes << "CAPTION:this IA #{bib.ia_rec_type} lacks caption"
+          needs_fix = true
+        else
+          notes << 'other IA item on bib lacks caption'
+        end
       end
-    unless bib.ia.select { |ia| ia.lacks_caption? }.empty?
-      # if bib has any ia with vol info that lacks caption
-      # may as well warn about any on bib, such that with "v.2" and "2"
-      # we'll reject both and process as dupes, rather than permit the "v.2"
-      # and later find the "2" is a dupe
-      if ia.lacks_caption?
-        # serial captions only affect HT/IA not Sierra links
-        # mono captions affect HT/IA and Sierra links
-        # if a serial is already in HT, lacks caption is not so big a problem,
-        # but monos already in HT still need captions for proper Sierra links.
-        notes << "CAPTION:this IA #{bib.ia_rec_type} lacks caption"
+      # if ia has no vol info but bib is mvmono or serial
+      if !ia.volume && ( bib.ia.length > 1 || (!bib.deleted? && bib.serial?))
+        notes << 'DISAMBIGUATE:this IA item needs volume'
         needs_fix = true
-      else
-        notes << 'other IA item on bib lacks caption'
+      # if bib.has multiple recs and >0 recs lack volume data
+      elsif ia_count_by_vol[nil] && (ia_count_by_vol[nil] > 1 || ia_count_by_vol.length > 1)
+        notes << 'other IA items on bib need volume disambiguation'
       end
-    end
-    # if ia has no vol info but bib is mvmono or serial
-    if !ia.volume && ( bib.ia.length > 1 || (!bib.deleted? && bib.serial?))
-      notes << 'DISAMBIGUATE:this IA item needs volume'
-      needs_fix = true
-    # if bib.has multiple recs and >0 recs lack volume data
-    elsif ia_count_by_vol[nil] && (ia_count_by_vol[nil] > 1 || ia_count_by_vol.length > 1)
-      notes << 'other IA items on bib need volume disambiguation'
-    end
-    # if ia has other rec in ia with same vol info (and vol info exists)
-    if ia.volume && ia_count_by_vol[ia.volume] > 1
-      notes << 'DUPE?: bib has >1 IA item with this volume'
-      needs_fix = true
+      # if ia has other rec in ia with same vol info (and vol info exists)
+      if ia.volume && ia_count_by_vol[ia.volume] > 1
+        notes << 'DUPE?: bib has >1 IA item with this volume'
+        needs_fix = true
+      end
     end
     priority = nil
     # priority 1 - things not in HT
