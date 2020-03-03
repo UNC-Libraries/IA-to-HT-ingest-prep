@@ -2,10 +2,10 @@
 
 ## Installation
 
-'''
+```
 git clone https://github.com/UNC-Libraries/IA-to-HT-ingest-prep
 bundle install
-'''
+```
 
 Other requirements:
 - `jq` (<http://stedolan.github.com/jq>)
