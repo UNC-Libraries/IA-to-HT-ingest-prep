@@ -12,7 +12,7 @@ Dir.mkdir (outdir) unless Dir.exist?(outdir)
 FileUtils.rm_rf Dir.glob("#{outdir}/*_ia_problems_*.csv")
 FileUtils.rm_rf Dir.glob("#{outdir}/*_no_priority_*.csv")
 
-problems = CSV.table('check_IA_data_for_problems.csv')
+problems = CSV.table('problems.csv')
 problems.delete_if { |r| r[:problems].empty? }
 
 headers = problems.headers

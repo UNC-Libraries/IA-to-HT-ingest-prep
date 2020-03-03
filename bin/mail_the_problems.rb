@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 require 'yaml'
 require 'mail'
 
@@ -26,7 +28,7 @@ eres_cat@unc.edu
 BODY
 
 
-emails = YAML.load_file('branch_emails.yaml')
+emails = YAML::load_file(File.join(__dir__, '../data', 'branch_emails.yaml'))
 
 # Add in existing branch problem files
 pfiles = Dir["branch_problems/*_ia_problems_*.csv"]
@@ -41,7 +43,7 @@ emails.delete_if { |k, v| v['filename'] == nil }
 # Abort if we lack email addresses for problem files
 no_emails = emails.select { |k,v| v['filename'] != '' && v['email'] == nil }
 unless no_emails.empty?
-  puts error = <<~EOL
+  puts <<~EOL
     need emails for:
     #{no_emails.keys.join("\n")}
     Aborting."
