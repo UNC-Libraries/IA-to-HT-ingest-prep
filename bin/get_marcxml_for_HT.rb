@@ -1,11 +1,13 @@
+#!/usr/bin/env ruby
+
 require 'csv'
-require_relative 'HathiRecord'
+require_relative '../lib/ia_to_ht_ingest_prep.rb'
 
 # input = IA search.csv results for prospective HT-ingest
 #   essential fields: bnum, id, ark, vol
 #   standard addl fields: publicdate, sponsor, contributor, collection
 # see readme for query link(s)
-ifile = IARecord.import_search_csv('search.csv')
+ifile = IaToHtIngestPrep::IaRecord.import_search_csv('search.csv')
 headers = ifile[0].keys
 ifile.sort_by! { |r| r[:unc_bib_record_id] }
 
@@ -24,18 +26,17 @@ end
 #     not be sent to HT
 # if at some point we also want to exclude certain ia_ids (instead of bibs),
 # we can add that
-exclude_bibs = File.read('ht_exclude_bib.txt').split("\n")
+exclude_bibs = File.read('data/ht_exclude_bib.txt').split("\n")
 exclude_bibs.select! { |x| x =~ /^b[0-9]+$/ }
 
 # this logs details of bib/marc errors
 err_log = File.open('bib_errors.txt', 'w')
 # this logs general disposition of everything
-$ia_logfile = CSV.open(Time.now.strftime('%Y%m%d') + '_ia_log.csv', 'w')
-$ia_logfile << ['reason', headers].flatten
+ia_logfile = CSV.open(Time.now.strftime('%Y%m%d') + '_ia_log.csv', 'w')
+ia_logfile << ['reason', headers].flatten
 
-
-def ia_log(reason, ia_record)
-  $ia_logfile << [reason, ia_record.values].flatten
+def ia_log(reason, ia_record, logfile)
+  logfile << [reason, ia_record.values].flatten
 end
 
 
@@ -50,50 +51,56 @@ ofilename = [
 
 written_count = 0
 File.open(ofilename,"w:UTF-8") do |xml_out|
-  xml_out << MARC::XML_HEADER
+  xml_out << MARC::XMLHelper::HEADER
   prev_bnum = nil
   prev_bib = nil
   ifile.each do |ia_record|
-    ia = IARecord.new(ia_record)
+    ia = IaToHtIngestPrep::IaRecord.new(ia_record)
     bnum = ia.bib_record_id
     if exclude_bibs.include?(bnum)
-      ia_log('bib blacklisted', ia_record)
+      ia_log('bib blacklisted', ia_record, ia_logfile)
       next
     end
     if problem_ids&.include?(ia.id)
       problem_id_exclusion += 1
-      ia_log('on problems.csv', ia_record)
+      ia_log('on problems.csv', ia_record, ia_logfile)
       next
     end
-    if prev_bnum == bnum
-      bib = prev_bib
-    else
-      bib = SierraBib.new(bnum)
-    end
-    hathi = HathiRecord.new(bib, ia)
+
+    bib =
+      if prev_bnum == bnum
+        prev_bib
+      else
+        begin
+          Sierra::Record.get(bnum)
+        rescue Sierra::Record::InvalidRecord
+          nil
+        end
+      end
+    hathi = Sierra::HathitrustRecord.new(bib, ia) if bib
     puts bnum
 
-    if !hathi.warnings.empty?
-      ia_log('no sierra record', ia_record)
+    if bib.nil?
+      ia_log('no sierra record', ia_record, ia_logfile)
     elsif !hathi.ia.ark
-      ia_log('no IA ark_id found', ia_record)
+      ia_log('no IA ark_id found', ia_record, ia_logfile)
     elsif arks.include?(hathi.ia.ark)
-      ia_log('record already in HT', ia_record)
-    elsif !hathi.manual_write_xml(outfile: xml_out,
-                                  strict: true)
-      ia_log('failed MARC checks', ia_record)
+      ia_log('record already in HT', ia_record, ia_logfile)
+    elsif !hathi.write_xml(outfile: xml_out,
+                           strict: true)
+      ia_log('failed MARC checks', ia_record, ia_logfile)
       hathi.warnings.each do |warning|
         err_log << "#{hathi.bnum}\t#{warning}\n"
       end
     else
       written_count += 1
-      ia_log('wrote xml', ia_record)
+      ia_log('wrote xml', ia_record, ia_logfile)
     end
 
     prev_bnum = bnum
     prev_bib = bib
   end
-  xml_out << MARC::XML_FOOTER
+  xml_out << MARC::XMLHelper::FOOTER
 end
 
 File.open('zephir_email.txt', 'w') do |ofile|
@@ -104,7 +111,7 @@ File.open('zephir_email.txt', 'w') do |ofile|
 end
 
 err_log.close
-$ia_logfile.close
+ia_logfile.close
 
 errors = File.read('bib_errors.txt').split("\n")
 errors.insert(0, "na\tExcluded #{problem_id_exclusion} ids of the #{problem_ids.length} ids on problems.csv due to...problems. LDSS, if this count is not what you expected, examine.")

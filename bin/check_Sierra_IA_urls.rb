@@ -1,3 +1,9 @@
+#!/usr/bin/env ruby
+
+# WARNING: This script may need to be updated in order to work. Whether we
+# still need it is questionable. Purpose was to check OCA urls existing in
+# Sierra for correctness.
+
 require_relative 'SierraArchiveURL'
 require_relative '../IASierraBib'
 require_relative '../IASierra856'

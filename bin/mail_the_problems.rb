@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 require 'yaml'
 require 'mail'
 
@@ -11,7 +13,7 @@ For more info, please see:
 https://internal.lib.unc.edu/wikis/staff/index.php/Branch_corrections_of_IA_metadata
 
 Please:
-  1) add corrections to the empty "volume" field of the attached list,
+  1) add corrections to the attached list per the wiki instructions,
   2) send corrected items in an attached .csv or .xlsx file
       to: eres_cat@unc.edu
       subject line: "IA/Scribe metadata corrections to load"
@@ -26,7 +28,7 @@ eres_cat@unc.edu
 BODY
 
 
-emails = YAML.load_file('branch_emails.yaml')
+emails = YAML::load_file(File.join(__dir__, '../data', 'branch_emails.yaml'))
 
 # Add in existing branch problem files
 pfiles = Dir["branch_problems/*_ia_problems_*.csv"]
@@ -41,7 +43,7 @@ emails.delete_if { |k, v| v['filename'] == nil }
 # Abort if we lack email addresses for problem files
 no_emails = emails.select { |k,v| v['filename'] != '' && v['email'] == nil }
 unless no_emails.empty?
-  puts error = <<~EOL
+  puts <<~EOL
     need emails for:
     #{no_emails.keys.join("\n")}
     Aborting."
