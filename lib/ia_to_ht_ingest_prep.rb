@@ -7,6 +7,7 @@ require_relative 'ia_to_ht_ingest_prep/ia_item_checker.rb'
 require_relative 'ia_to_ht_ingest_prep/ia_m856.rb'
 require_relative 'ia_to_ht_ingest_prep/ia_record.rb'
 require_relative 'ia_to_ht_ingest_prep/ia_sierra_item.rb'
+require_relative 'ia_to_ht_ingest_prep/sierra_archive_url.rb'
 
 
 # sierra_archive_url.rb is not in working condition and would need to be updated

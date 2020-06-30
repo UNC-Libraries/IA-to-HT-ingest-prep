@@ -10,6 +10,7 @@ module IaToHtIngestPrep
     end
 
     def bnum
+      return "b#{sierra.record_num}a" if deleted?
       @sierra.bnum
     end
 

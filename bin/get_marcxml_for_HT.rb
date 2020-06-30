@@ -77,7 +77,7 @@ File.open(ofilename,"w:UTF-8") do |xml_out|
           nil
         end
       end
-    hathi = Sierra::HathitrustRecord.new(bib, ia) if bib
+    hathi = Sierra::Derivatives::HathitrustRecord.new(bib, ia) if bib
     puts bnum
 
     if bib.nil?
@@ -86,15 +86,17 @@ File.open(ofilename,"w:UTF-8") do |xml_out|
       ia_log('no IA ark_id found', ia_record, ia_logfile)
     elsif arks.include?(hathi.ia.ark)
       ia_log('record already in HT', ia_record, ia_logfile)
-    elsif !hathi.write_xml(outfile: xml_out,
-                           strict: true)
-      ia_log('failed MARC checks', ia_record, ia_logfile)
-      hathi.warnings.each do |warning|
-        err_log << "#{hathi.bnum}\t#{warning}\n"
-      end
     else
-      written_count += 1
-      ia_log('wrote xml', ia_record, ia_logfile)
+      hathi.write_xml(outfile: xml_out, strict: true)
+      if hathi.warnings.empty?
+        written_count += 1
+        ia_log('wrote xml', ia_record, ia_logfile)
+      else
+        ia_log('failed MARC checks', ia_record, ia_logfile)
+        hathi.warnings.each do |warning|
+          err_log << "#{hathi.bnum}\t#{warning}\n"
+        end
+      end
     end
 
     prev_bnum = bnum
