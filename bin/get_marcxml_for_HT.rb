@@ -58,7 +58,7 @@ File.open(ofilename,"w:UTF-8") do |xml_out|
     ia = IaToHtIngestPrep::IaRecord.new(ia_record)
     bnum = ia.bib_record_id
     if exclude_bibs.include?(bnum)
-      ia_log('bib blacklisted', ia_record, ia_logfile)
+      ia_log('bib on exclude list', ia_record, ia_logfile)
       next
     end
     if problem_ids&.include?(ia.id)
