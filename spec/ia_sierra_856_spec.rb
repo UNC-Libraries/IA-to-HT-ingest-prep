@@ -71,7 +71,7 @@ module IaToHtIngestPrep
       sb2 = IaBib.new(Sierra::Record.get('b1317054a'))
       serial856_1 = IASierra856.new(sb2, irec)
       it 'does not contain ia.volume data for serials' do
-        expect(serial856_1.proper_sf3).to be_nil
+        expect(serial856_1.proper_sf3&.value).to be_nil.or eq('Internet Archive')
       end
 
       sb3 = IaBib.new(Sierra::Record.get('b2043737a'))
