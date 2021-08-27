@@ -33,12 +33,17 @@ module IaToHtIngestPrep
     end
 
     # Reads IA csv exported from advanced search into hash with symbol headers.
-    #   The entire line of headers that IA outputs is quoted, so the first
+    #   At times, the entire line of headers that IA outputs has been quoted, so the first
     #   column seems to be named e.g. "unc_record_id,volume,identifier,..." and
-    #   everything else is named nil. This fixes that.
+    #   everything else is named nil. This handles the headers whether that
+    #   weirdness is in place or not.
     def self.import_search_csv(csv_path)
       ifile = CSV.read(csv_path, headers: true)
-      headers = ifile.headers[0].split(",").map { |x| x.to_sym }
+      headers = if ifile.headers.length == 1
+                  file.headers[0].split(",").map { |x| x.to_sym }
+                else
+                  ifile.headers.map { |x| x.to_sym }
+                end
       ifile = ifile.to_a[1..-1].map { |row| headers.zip(row).to_h }
       # IA sometimes returns truncated csv's, the last record of which is:
       failstring = 'Search engine returned invalid information or was unresponsive'
