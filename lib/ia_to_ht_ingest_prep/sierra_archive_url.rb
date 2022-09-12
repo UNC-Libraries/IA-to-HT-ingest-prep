@@ -73,12 +73,12 @@ class SierraArchiveURL
   end
 
   def get_url_call_number
-    m = @sfu.match(/(unc_bib_record_id|call_number)[^b]*(b[0-9]*)/)
+    m = @sfu.match(/unc_bib_record_id[^b]*(b[0-9]*)/)
     unless m
       @url_call_number = nil
       return
     end
-    @url_call_number = m[2].strip
+    @url_call_number = m[1].strip
   end
 
   def url_bib_record_id
@@ -87,7 +87,7 @@ class SierraArchiveURL
 
   def get_url_bib_record_id
     self.get_url_call_number if !@url_call_number
-    @url_bib_record_id =  @url_call_number[0..7] if @url_call_number
+    @url_bib_record_id =  @url_call_number if @url_call_number
   end
 
   def check_ia_record_found
