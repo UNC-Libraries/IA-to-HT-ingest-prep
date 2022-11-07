@@ -1,6 +1,7 @@
 require 'sierra_postgres_utilities'
 require 'sierra_postgres_utilities/derivatives'
 
+require_relative 'ia_to_ht_ingest_prep/ht_marc_exporter.rb'
 require_relative 'ia_to_ht_ingest_prep/ia_bib_marc_stub.rb'
 require_relative 'ia_to_ht_ingest_prep/ia_bib.rb'
 require_relative 'ia_to_ht_ingest_prep/ia_item_checker.rb'
