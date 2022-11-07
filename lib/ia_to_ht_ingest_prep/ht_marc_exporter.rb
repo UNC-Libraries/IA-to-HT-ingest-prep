@@ -10,26 +10,32 @@ module IaToHtIngestPrep
   # and outputs:
   #   - a marxml file to submit to HT
   #   - zephir email text for the email manually sent to zephir
+  #   - a list of bib/marc errors
   class HtMarcExporter
     def initialize
-    end
-
-    def run
       # input = IA search.csv results for prospective HT-ingest
       #   essential fields: bnum, id, ark, vol
       #   standard addl fields: publicdate, sponsor, contributor, collection
       # see readme for query link(s)
-      ifile = IaToHtIngestPrep::IaRecord.import_search_csv('search.csv')
+      @ia_inventory_file = 'search.csv'
+
+      @ht_unc_arks_file = 'nc01.arks.txt'
+      @problems_file = 'problems.csv'
+      @manual_bib_excludes_file = 'data/ht_exclude_bib.txt'
+    end
+
+    def run
+      ifile = IaToHtIngestPrep::IaRecord.import_search_csv(@ia_inventory_file)
       headers = ifile[0].keys
       ifile.sort_by! { |r| r[:unc_bib_record_id] }
 
       # input = arks UNC contributed to HT to date
-      arks = File.read('nc01.arks.txt').split("\n")
+      arks = File.read(@ht_unc_arks_file).split("\n")
 
       # input = ia_ids with IA-metadata issues to be excluded from HT-ingest (until fixed)
       problem_ids = []
-      if File.file?('problems.csv')
-        problem_ids = CSV.read('problems.csv', headers: true)
+      if File.file?(@problems_file)
+        problem_ids = CSV.read(@problems_file, headers: true)
         problem_ids = problem_ids.to_a[1..-1].map { |r| r[0] }
       end
 
@@ -38,7 +44,7 @@ module IaToHtIngestPrep
       #     not be sent to HT
       # if at some point we also want to exclude certain ia_ids (instead of bibs),
       # we can add that
-      exclude_bibs = File.read('data/ht_exclude_bib.txt').split("\n")
+      exclude_bibs = File.read(@manual_bib_excludes_file).split("\n")
       exclude_bibs.select! { |x| x =~ /^b[0-9]+$/ }
 
       # this logs details of bib/marc errors
