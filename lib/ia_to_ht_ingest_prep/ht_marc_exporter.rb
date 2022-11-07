@@ -12,7 +12,7 @@ module IaToHtIngestPrep
   #   - zephir email text for the email manually sent to zephir
   #   - a list of bib/marc errors
   class HtMarcExporter
-    def initialize
+    def initialize(reingest_id_list: nil)
       # input = IA search.csv results for prospective HT-ingest
       #   essential fields: bnum, id, ark, vol
       #   standard addl fields: publicdate, sponsor, contributor, collection
@@ -22,10 +22,25 @@ module IaToHtIngestPrep
       @ht_unc_arks_file = 'nc01.arks.txt'
       @problems_file = 'problems.csv'
       @manual_bib_excludes_file = 'data/ht_exclude_bib.txt'
+
+      # Optional list of IA identifiers to export. These records will be exported
+      # regardless of whether they are already in HT (but may be excluded for
+      # other reasons e.g. IA/bib data issues) and only these records will be
+      # exported.
+      @reingest_id_list = reingest_id_list
+    end
+
+    def reingest_ids
+      return unless @reingest_id_list
+
+      @reingest_ids ||= File.read(@reingest_id_list).split
     end
 
     def run
+      reingest_ids = File.read('reingest.txt').split if @reingest_id_list
+
       ifile = IaToHtIngestPrep::IaRecord.import_search_csv(@ia_inventory_file)
+      ifile.select! { |r| reingest_ids.include?(r[:identifier]) } if reingest_ids
       headers = ifile[0].keys
       ifile.sort_by! { |r| r[:unc_bib_record_id] }
 
@@ -102,7 +117,7 @@ module IaToHtIngestPrep
             ia_log('no sierra record', ia_record, ia_logfile)
           elsif !hathi.ia.ark
             ia_log('no IA ark_id found', ia_record, ia_logfile)
-          elsif arks.include?(hathi.ia.ark)
+          elsif arks.include?(hathi.ia.ark) && !reingest_ids
             ia_log('record already in HT', ia_record, ia_logfile)
           else
             hathi.write_xml(outfile: xml_out, strict: true)
