@@ -45,7 +45,7 @@ module IaToHtIngestPrep
     end
 
     describe 'proper_sfy' do
-      static_sfy = 'Full text available via the UNC-Chapel Hill Libraries'
+      static_sfy = 'Full text of UNC-digitized copies'
       mono856 = IASierra856.new(sbmono, irec)
 
       it 'returns standard 856$y' do

@@ -28,7 +28,7 @@ module IaToHtIngestPrep
     end
 
     def proper_sfy
-      return MARC::Subfield.new('y', "Full text available via the UNC-Chapel Hill Libraries")
+      return MARC::Subfield.new('y', "Full text of UNC-digitized copies")
     end
 
     def proper_sfx
