@@ -90,7 +90,7 @@ module IaToHtIngestPrep
       sbserial = IaBib.new(Sierra::Record.get('b1484972a'))
       sbserial.ia_items = [irec]
       sbserial_neededmrk = sbserial.m856s_needed.map(&:to_mrk)
-      my_query = ["=856  41$uhttps://archive.org/search.php?sort=publicdate&query=scanningcenter%3Achapelhill+AND+mediatype%3Atexts+AND+unc_bib_record_id%3Ab2095036$yFull text available via the UNC-Chapel Hill Libraries$xocalink_ldss"]
+      my_query = ["=856  41$uhttps://archive.org/search.php?sort=publicdate&query=scanningcenter%3Achapelhill+AND+mediatype%3Atexts+AND+unc_bib_record_id%3Ab2095036$yFull text of UNC-digitized copies$xocalink_ldss"]
       it 'returns query 856 for serials lacking query 856' do
         expect(sbserial_neededmrk).to eq(my_query)
       end
@@ -104,7 +104,7 @@ module IaToHtIngestPrep
       sbmono = IaBib.new(Sierra::Record.get('b1156369a'))
       sbmono.ia_items = [irec]
       sbmono_neededmrk = sbmono.m856s_needed.map(&:to_mrk)
-      my_detail = ["=856  41$3v.3$uhttps://archive.org/details/elclavoardiendod550valc$yFull text available via the UNC-Chapel Hill Libraries$xocalink_ldss"]
+      my_detail = ["=856  41$3v.3$uhttps://archive.org/details/elclavoardiendod550valc$yFull text of UNC-digitized copies$xocalink_ldss"]
       it 'returns detail 856 for mono lacking that 856' do
         expect(sbmono_neededmrk).to eq(my_detail)
       end
