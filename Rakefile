@@ -46,8 +46,7 @@ end
 namespace :ht do
   def most_recent_hathifile
     # this hathi_file_list.json url from "https://www.hathitrust.org/hathifiles"
-    # seems to be static
-    file_list_url = 'https://www.hathitrust.org/filebrowser/download/244651'
+    file_list_url = 'https://www.hathitrust.org/files/hathifiles/hathi_file_list.json'
     json = JSON.parse(`curl --silent #{file_list_url}`)
     htfile_url = json.select { |f| f['full'] }.
                       sort_by { |f| f['filename'] }.reverse.
