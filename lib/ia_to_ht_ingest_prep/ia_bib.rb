@@ -38,6 +38,10 @@ module IaToHtIngestPrep
       @sierra.marc
     end
 
+    def marc_stub
+      @sierra.stub
+    end
+
     # Bib rec type in the context of IA
     def ia_rec_type
       case @sierra.bcode1
