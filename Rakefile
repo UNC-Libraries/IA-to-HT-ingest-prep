@@ -79,16 +79,25 @@ namespace :ht do
     desc 'Extract most recent hathifile'
     task :unzip do
       filename = most_recent_hathifile[:filename]
-      command = 'gzip -df hathi_full_20*.gz'
-      sh command do |ok, _res|
-        # Unzip with ruby if gzip not present
+      gzip_command = 'gzip -df hathi_full_20*.gz'
+      # fallback suitable for windows cmd shell with git bash
+      fallback_command = "bash -c \"#{gzip_command}\""
+
+      # Try to unzip running gzip directly
+      # Failing that, try using bash to invoke the gzip command
+      # Failing that, unzip with ruby
+      sh gzip_command do |ok, _res|
         unless ok
-          File.open(filename, 'w') do |ofile|
-            Zlib::GzipReader.open("#{filename}.gz").each_line do |line|
-              ofile.write(line)
+          sh fallback_command do |ok2, _res2|
+            unless ok2
+              File.open(filename, 'w') do |ofile|
+                Zlib::GzipReader.open("#{filename}.gz").each_line do |line|
+                  ofile.write(line)
+                end
+              end
+              File.delete("#{filename}.gz")
             end
           end
-          File.delete("#{filename}.gz")
         end
       end
     end
