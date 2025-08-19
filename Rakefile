@@ -32,13 +32,13 @@ namespace :download do
 
   desc 'Download IA contributions EXCLUDING ncdhc'
   task :ia_excludes do
-    excludes = '"https://archive.org/advancedsearch.php?q=scanningcenter%3A(chapelhill)+AND+unc_bib_record_id%3A%5B*+TO+*%5D+AND+publicdate%3A%5B2001-01-03+TO+null%5D+AND+NOT+collection%3A(ncdhc)+AND+collection%3A(unclibraries)&fl%5B%5D=unc_bib_record_id,identifier,identifier-ark,volume,publicdate,sponsor,contributor,collection&sort%5B%5D=&sort%5B%5D=&sort%5B%5D=&rows=5000000&page=1&output=csv&callback=callback&save=yes"'
+    excludes = '"https://archive.org/advancedsearch.php?q=scanningcenter%3A(chapelhill)+AND+unc_bib_record_id%3A%5B*+TO+*%5D+AND+publicdate%3A%5B2001-01-03+TO+*%5D+AND+NOT+collection%3A(ncdhc)+AND+collection%3A(unclibraries)&fl%5B%5D=unc_bib_record_id,identifier,identifier-ark,volume,publicdate,sponsor,contributor,collection&sort%5B%5D=&sort%5B%5D=&sort%5B%5D=&rows=5000000&page=1&output=csv&callback=callback&save=yes"'
     sh "curl #{excludes} --silent --output search.csv"
   end
 
   desc 'Download IA contributions INCLUDING ncdhc'
   task :ia_includes do
-    includes = '"https://archive.org/advancedsearch.php?q=scanningcenter%3A(chapelhill)+AND+unc_bib_record_id%3A%5B*+TO+*%5D+AND+publicdate%3A%5B2001-01-03+TO+null%5D+AND+collection%3A(unclibraries)&fl%5B%5D=unc_bib_record_id,identifier,identifier-ark,volume,publicdate,sponsor,contributor,collection&sort%5B%5D=&sort%5B%5D=&sort%5B%5D=&rows=5000000&page=1&output=csv&callback=callback&save=yes"'
+    includes = '"https://archive.org/advancedsearch.php?q=scanningcenter%3A(chapelhill)+AND+unc_bib_record_id%3A%5B*+TO+*%5D+AND+publicdate%3A%5B2001-01-03+TO+*%5D+AND+collection%3A(unclibraries)&fl%5B%5D=unc_bib_record_id,identifier,identifier-ark,volume,publicdate,sponsor,contributor,collection&sort%5B%5D=&sort%5B%5D=&sort%5B%5D=&rows=5000000&page=1&output=csv&callback=callback&save=yes"'
     sh "curl #{includes} --silent --output search.csv.includes"
   end
 end
@@ -79,16 +79,25 @@ namespace :ht do
     desc 'Extract most recent hathifile'
     task :unzip do
       filename = most_recent_hathifile[:filename]
-      command = 'gzip -df hathi_full_20*.gz'
-      sh command do |ok, _res|
-        # Unzip with ruby if gzip not present
+      gzip_command = 'gzip -df hathi_full_20*.gz'
+      # fallback suitable for windows cmd shell with git bash
+      fallback_command = "bash -c \"#{gzip_command}\""
+
+      # Try to unzip running gzip directly
+      # Failing that, try using bash to invoke the gzip command
+      # Failing that, unzip with ruby
+      sh gzip_command do |ok, _res|
         unless ok
-          File.open(filename, 'w') do |ofile|
-            Zlib::GzipReader.open("#{filename}.gz").each_line do |line|
-              ofile.write(line)
+          sh fallback_command do |ok2, _res2|
+            unless ok2
+              File.open(filename, 'w') do |ofile|
+                Zlib::GzipReader.open("#{filename}.gz").each_line do |line|
+                  ofile.write(line)
+                end
+              end
+              File.delete("#{filename}.gz")
             end
           end
-          File.delete("#{filename}.gz")
         end
       end
     end
