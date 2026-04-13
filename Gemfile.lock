@@ -8,10 +8,10 @@ GIT
 
 GIT
   remote: https://github.com/UNC-Libraries/sierra-postgres-utilities.git
-  revision: 54e6d1b7fcb18b7b47a5ed2bf9083340582361f2
+  revision: b17f2865e04a13b2ba576b42f967005882b03555
   branch: main
   specs:
-    sierra_postgres_utilities (0.3.6.1)
+    sierra_postgres_utilities (0.3.7)
       i18n (~> 1.6.0)
       mail (~> 2.6)
       marc (~> 1.2.0)
