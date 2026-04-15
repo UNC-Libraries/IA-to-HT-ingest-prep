@@ -53,9 +53,8 @@ GEM
     net-smtp (0.5.1)
       net-protocol
     pg (1.6.1)
-    pg (1.6.1-x64-mingw32)
     rake (13.3.0)
-    rexml (3.4.1)
+    rexml (3.4.2)
     rspec (3.13.1)
       rspec-core (~> 3.13.0)
       rspec-expectations (~> 3.13.0)
@@ -76,7 +75,7 @@ GEM
 
 PLATFORMS
   ruby
-  x64-mingw32
+  x64-mingw-ucrt
 
 DEPENDENCIES
   bundler (~> 2.0)
