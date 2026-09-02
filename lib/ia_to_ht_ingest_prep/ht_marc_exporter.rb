@@ -12,7 +12,9 @@ module IaToHtIngestPrep
   #   - zephir email text for the email manually sent to zephir
   #   - a list of bib/marc errors
   class HtMarcExporter
-    def initialize(reingest_id_list: nil)
+    REINGEST_FILE = 'reingest.txt'
+
+    def initialize(reingest: false)
       # input = IA search.csv results for prospective HT-ingest
       #   essential fields: bnum, id, ark, vol
       #   standard addl fields: publicdate, sponsor, contributor, collection
@@ -23,24 +25,26 @@ module IaToHtIngestPrep
       @problems_file = 'problems.csv'
       @manual_bib_excludes_file = 'data/ht_exclude_bib.txt'
 
-      # Optional list of IA identifiers to export. These records will be exported
+      # Optional reingest mode exports only identifiers listed in REINGEST_FILE,
       # regardless of whether they are already in HT (but may be excluded for
-      # other reasons e.g. IA/bib data issues) and only these records will be
-      # exported.
-      @reingest_id_list = reingest_id_list
+      # other reasons e.g. IA/bib data issues).
+      @reingest = reingest
     end
 
     def reingest_ids
-      return unless @reingest_id_list
+      return unless @reingest
 
-      @reingest_ids ||= File.read(@reingest_id_list).split
+      @reingest_ids ||= File.read(REINGEST_FILE).split
     end
 
     def run
-      reingest_ids = File.read('reingest.txt').split if @reingest_id_list
+      reingest_ids = self.reingest_ids
 
       ifile = IaToHtIngestPrep::IaRecord.import_search_csv(@ia_inventory_file)
       ifile.select! { |r| reingest_ids.include?(r[:identifier]) } if reingest_ids
+      if reingest_ids && ifile.empty?
+        raise 'No records in search.csv match identifiers in reingest.txt'
+      end
       headers = ifile[0].keys
       ifile.sort_by! { |r| r[:unc_bib_record_id] }
 

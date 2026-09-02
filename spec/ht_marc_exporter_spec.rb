@@ -126,5 +126,55 @@ module IaToHtIngestPrep
       expect(File.read('bib_errors.txt')).to include("b1000005\tinvalid MARC")
       expect(File.read('zephir_email.txt')).to include('record count=0')
     end
+
+    it 'reingests listed records that are already in HathiTrust' do
+      record = ['b1000001', 'ia-reingest', 'ark:/13960/reingest', 'v.1']
+      other_record = ['b1000002', 'ia-not-reingest', 'ark:/13960/other', 'v.1']
+      write_inputs(
+        records: [record, other_record],
+        hathi_arks: ['ark:/13960/reingest']
+      )
+      File.write('reingest.txt', "ia-reingest\n")
+      stub_sierra(
+        {'b1000001' => double},
+        {'ia-reingest' => hathi_record(
+          ark: 'ark:/13960/reingest',
+          bnum: 'b1000001',
+          xml: '<record>reingest</record>'
+        )}
+      )
+
+      HtMarcExporter.new(reingest: true).run
+
+      expect(File.read("#{today}_ia_log.csv")).to include('wrote xml,')
+      expect(File.read('zephir_email.txt')).to include('record count=1')
+      expect(Dir['unc_ia-unc_*_ia.xml'].first).to include('unc_ia-unc_')
+    end
+
+    it 'raises when no search records match the reingest list' do
+      write_inputs(
+        records: [['b1000001', 'ia-other', 'ark:/13960/other', 'v.1']]
+      )
+      File.write('reingest.txt', "ia-missing\n")
+
+      expect { HtMarcExporter.new(reingest: true).run }.
+        to raise_error(
+          RuntimeError,
+          'No records in search.csv match identifiers in reingest.txt'
+        )
+    end
+
+    it 'raises when the reingest list is empty' do
+      write_inputs(
+        records: [['b1000001', 'ia-other', 'ark:/13960/other', 'v.1']]
+      )
+      File.write('reingest.txt', '')
+
+      expect { HtMarcExporter.new(reingest: true).run }.
+        to raise_error(
+          RuntimeError,
+          'No records in search.csv match identifiers in reingest.txt'
+        )
+    end
   end
 end
