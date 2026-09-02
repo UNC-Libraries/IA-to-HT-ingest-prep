@@ -1,4 +1,9 @@
 require "bundler/setup"
+
+# These specs use local fixtures and test doubles, not a Sierra connection.
+# Defer s-p-u's automatic connection so the suite does not require credentials.
+ENV['SIERRA_DELAY_CONNECT'] = '1'
+
 require "ia_to_ht_ingest_prep"
 
 RSpec.configure do |config|
