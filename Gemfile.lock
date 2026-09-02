@@ -22,6 +22,7 @@ PATH
   remote: .
   specs:
     ia_to_ht_ingest_prep (0.4.0)
+      csv
       sierra_postgres_utilities (~> 0.3.0)
       sierra_postgres_utilities-derivatives (~> 1.2)
 
@@ -29,6 +30,7 @@ GEM
   remote: https://rubygems.org/
   specs:
     concurrent-ruby (1.3.5)
+    csv (3.3.6)
     date (3.4.1)
     diff-lcs (1.6.2)
     i18n (1.6.0)

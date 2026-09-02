@@ -30,6 +30,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake", "~> 13.3"
   spec.add_development_dependency "rspec", "~> 3.0"
 
+  spec.add_runtime_dependency 'csv'
   spec.add_runtime_dependency 'sierra_postgres_utilities', '~> 0.3.0'
   spec.add_runtime_dependency 'sierra_postgres_utilities-derivatives', '~> 1.2'
 end
