@@ -23,6 +23,30 @@ jobs:
     - name: Run specs
       run: bundle exec rspec
 
+  windows:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: [3.3, 3.4]
+    steps:
+    - uses: actions/checkout@v4
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby }}
+    - name: Install dependencies
+      shell: pwsh
+      run: |
+        bundle config set frozen false
+        bundle install
+    - name: Verify Windows lockfile
+      shell: pwsh
+      run: |
+        git diff -- Gemfile.lock
+        git diff --exit-code -- Gemfile.lock
+    - name: Run specs
+      run: bundle exec rspec
+
   audit:
     runs-on: ubuntu-latest
     steps:
