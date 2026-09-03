@@ -22,7 +22,7 @@ GIT
 PATH
   remote: .
   specs:
-    ia_to_ht_ingest_prep (0.4.0)
+    ia_to_ht_ingest_prep (0.5.0)
       csv
       sierra_postgres_utilities (~> 0.3.8)
       sierra_postgres_utilities-derivatives (~> 1.3)
